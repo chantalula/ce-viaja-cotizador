@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; height: 100%; }
+
+input:focus, select:focus, textarea:focus {
+  border-color: #16A99C !important;
+  outline: none;
+}
+
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-thumb {
+  background: #cfd9e3;
+  border-radius: 8px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
