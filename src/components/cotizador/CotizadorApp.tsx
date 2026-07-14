@@ -48,7 +48,7 @@ function newSeg(): Segment {
 
 function newItem(type: string): QuoteItem {
   if (type === 'flight') return { type: 'flight', dir: 'Ida', date: '', price: 0, baggage: '1 maleta 23 kg + equipaje de mano', segments: [newSeg()] }
-  if (type === 'hotel') return { type: 'hotel', name: 'Hotel', location: '', address: '', checkIn: '', checkOut: '', nights: '', roomType: '', board: '', cancellation: '', price: 0 }
+  if (type === 'hotel') return { type: 'hotel', name: 'Hotel', stars: 0, location: '', address: '', checkIn: '', checkOut: '', nights: '', roomType: '', board: '', cancellation: '', price: 0 }
   if (type === 'cruise') return { type: 'cruise', line: '', ship: '', route: '', depart: '', nights: '', cabin: '', cabinLabel: '', boardingTime: '', ports: [], promotion: '', price: 0 }
   if (type === 'tour') return { type: 'tour', name: 'Tour', location: '', date: '', duration: '', includes: '', price: 0 }
   if (type === 'car') return { type: 'car', category: '', model: '', pickupLocation: '', dropoffLocation: '', pickupDate: '', returnDate: '', days: '', passengers: '5', bags: '2', doors: '4', ac: 'Sí', transmission: 'Automático', protection: 'Protección Total', promotion: '', price: 0 }
@@ -143,7 +143,7 @@ function normalizeItem(it: Record<string, unknown>): QuoteItem | null {
       segments: ((it.segments as unknown[]) || []).map((sg) => Object.assign(newSeg(), sg as object)),
     }
   }
-  if (it.type === 'hotel') return { type: 'hotel', name: (it.name as string) || 'Hotel', location: (it.location as string) || '', address: (it.address as string) || '', checkIn: (it.checkIn as string) || '', checkOut: (it.checkOut as string) || '', nights: (it.nights as string) || '', roomType: (it.roomType as string) || '', board: (it.board as string) || '', cancellation: (it.cancellation as string) || '', price: Number(it.price) || 0 }
+  if (it.type === 'hotel') return { type: 'hotel', name: (it.name as string) || 'Hotel', stars: Number(it.stars) || 0, location: (it.location as string) || '', address: (it.address as string) || '', checkIn: (it.checkIn as string) || '', checkOut: (it.checkOut as string) || '', nights: (it.nights as string) || '', roomType: (it.roomType as string) || '', board: (it.board as string) || '', cancellation: (it.cancellation as string) || '', price: Number(it.price) || 0 }
   if (it.type === 'cruise') return { type: 'cruise', line: (it.line as string) || '', ship: (it.ship as string) || '', route: (it.route as string) || '', depart: (it.depart as string) || '', nights: (it.nights as string) || '', cabin: (it.cabin as string) || '', cabinLabel: (it.cabinLabel as string) || '', boardingTime: (it.boardingTime as string) || '', ports: ((it.ports as unknown[]) || []).map((p) => ({ date: (p as Record<string,string>).date || '', port: (p as Record<string,string>).port || '', arr: (p as Record<string,string>).arr || '', dep: (p as Record<string,string>).dep || '' })), promotion: (it.promotion as string) || '', price: Number(it.price) || 0 }
   if (it.type === 'tour') return { type: 'tour', name: (it.name as string) || 'Tour', location: (it.location as string) || '', date: (it.date as string) || '', duration: (it.duration as string) || '', includes: (it.includes as string) || '', price: Number(it.price) || 0 }
   if (it.type === 'transfer') return { type: 'transfer', from: (it.from as string) || '', to: (it.to as string) || '', date: (it.date as string) || '', vehicle: (it.vehicle as string) || '', mode: (it.mode as string) || 'Privado', price: Number(it.price) || 0 }
@@ -1414,7 +1414,17 @@ export default function CotizadorApp() {
                     const hi = item as HotelItem
                     return (
                       <>
-                        <label style={{ display: 'block', marginBottom: 9 }}><span style={labelSt}>Nombre del hotel</span><input value={hi.name} onChange={e => onField('items.' + idx + '.name', e.target.value)} style={inputSt} /></label>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 9, marginBottom: 9, alignItems: 'end' }}>
+                          <label style={{ display: 'block' }}><span style={labelSt}>Nombre del hotel</span><input value={hi.name} onChange={e => onField('items.' + idx + '.name', e.target.value)} style={inputSt} /></label>
+                          <div>
+                            <span style={labelSt}>Estrellas</span>
+                            <div style={{ display: 'flex', gap: 2, paddingTop: 4 }}>
+                              {[1,2,3,4,5].map(n => (
+                                <button key={n} type="button" onClick={() => onField('items.' + idx + '.stars', hi.stars === n ? 0 : n)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, padding: '2px 1px', color: n <= hi.stars ? '#F5A623' : '#D8E0E8', lineHeight: 1 }}>★</button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
                         <label style={{ display: 'block', marginBottom: 9 }}><span style={labelSt}>Ubicación</span><input value={hi.location} onChange={e => onField('items.' + idx + '.location', e.target.value)} style={inputSt} /></label>
                         <label style={{ display: 'block', marginBottom: 9 }}><span style={labelSt}>Dirección</span><input value={hi.address} onChange={e => onField('items.' + idx + '.address', e.target.value)} placeholder="Av. Principal 123, Ciudad" style={inputSt} /></label>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 9, marginBottom: 9 }}>
@@ -1778,7 +1788,10 @@ export default function CotizadorApp() {
                       return (
                         <>
                           <div style={{ marginBottom: 13 }}>
-                            <div style={{ background: '#16A99C', color: '#fff', fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.12em', padding: '7px 14px', borderRadius: 6, display: 'inline-block' }}>HOTEL · {hi.name}</div>
+                            <div style={{ background: '#16A99C', color: '#fff', fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.12em', padding: '7px 14px', borderRadius: 6, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                              <span>HOTEL · {hi.name}</span>
+                              {hi.stars > 0 && <span style={{ color: '#FFE566', letterSpacing: 1 }}>{'★'.repeat(hi.stars)}</span>}
+                            </div>
                           </div>
                           <div style={{ border: '1px solid #E6EDF3', borderRadius: 10, overflow: 'hidden' }}>
                             <div style={{ padding: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 16px', borderBottom: '1px solid #EDF1F5' }}>

@@ -34,6 +34,7 @@ export interface FlightItem {
 export interface HotelItem {
   type: 'hotel'
   name: string
+  stars: number
   location: string
   address: string
   checkIn: string

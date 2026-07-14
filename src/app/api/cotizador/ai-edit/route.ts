@@ -19,7 +19,7 @@ La cotización tiene esta estructura:
 
 Tipos de items posibles:
 VUELO: {"type":"flight","dir":"Ida"|"Vuelta"|"Tramo interno","date":"Jue 21 may 2026","price":0,"baggage":"","segments":[{"airline":"","flightNo":"","alliance":"—","from":"","fromCity":"","dep":"","to":"","toCity":"","arr":"","plus":"","duration":"","aircraft":"","cabin":"Económica","connectionAfter":""}]}
-HOTEL: {"type":"hotel","name":"","location":"","address":"","checkIn":"","checkOut":"","nights":"","roomType":"","board":"","cancellation":"Tarifa no reembolsable"|"Permite cancelación"|"","price":0}
+HOTEL: {"type":"hotel","name":"","stars":0,"location":"","address":"","checkIn":"","checkOut":"","nights":"","roomType":"","board":"","cancellation":"Tarifa no reembolsable"|"Permite cancelación"|"","price":0}
 CRUCERO: {"type":"cruise","line":"","ship":"","route":"","depart":"","nights":"","cabin":"","cabinLabel":"","boardingTime":"","ports":[],"promotion":"","price":0}
 TOUR: {"type":"tour","name":"","location":"","date":"","duration":"","includes":"","price":0}
 TRASLADO: {"type":"transfer","from":"","to":"","date":"","vehicle":"","mode":"Privado","price":0}
