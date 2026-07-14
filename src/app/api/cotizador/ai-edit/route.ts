@@ -32,6 +32,7 @@ Reglas:
   * Foto del barco (crucero): se busca por el campo "ship". Si piden foto del barco, asegúrate que "ship" tenga el nombre correcto.
   * Foto del destino/puerto (crucero): se busca por el nombre del PRIMER puerto en "ports[0].port". Si piden foto de un destino, agrega o actualiza el primer puerto con ese lugar.
   * Foto del carro: se busca por el campo "model". Si piden foto del carro, asegúrate que "model" tenga el modelo correcto.
+- Si la instrucción pide la dirección de un hotel o el campo "address" está vacío y conoces la dirección, complétala con tu propio conocimiento.
 - Si la instrucción pide agregar un comentario o nota, ponlo en el campo "comments".
 - Si pide quitar algo, elimínalo del array items.
 - Si pide cambiar un precio, actualiza el campo correspondiente.
