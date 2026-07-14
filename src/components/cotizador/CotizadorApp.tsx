@@ -1035,7 +1035,7 @@ export default function CotizadorApp() {
     setPdfBusy(true)
     try {
       const blob = await generatePDFBlob()
-      const filename = `CE-Viaja-${quote.number}.pdf`
+      const filename = (pdfName.trim() || `CE-Viaja-${quote.number}`).replace(/\.pdf$/i, '') + '.pdf'
       const file = new File([blob], filename, { type: 'application/pdf' })
 
       // Mobile: native share with file
@@ -1059,7 +1059,7 @@ export default function CotizadorApp() {
     setPdfBusy(true)
     try {
       const blob = await generatePDFBlob()
-      const filename = `CE-Viaja-${quote.number}.pdf`
+      const filename = (pdfName.trim() || `CE-Viaja-${quote.number}`).replace(/\.pdf$/i, '') + '.pdf'
       const file = new File([blob], filename, { type: 'application/pdf' })
 
       // Mobile: native share
