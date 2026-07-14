@@ -1681,24 +1681,14 @@ export default function CotizadorApp() {
                             {ci.nights && <div style={{ fontSize: 12, color: '#5B7186', fontWeight: 700 }}>🚢 {ci.nights} noches</div>}
                           </div>
 
-                          {/* Photos 1fr/1fr */}
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
-                            <div style={{ height: 160 }}>
-                              <ImageSlot
-                                id={`cr${idx}-ext`}
-                                placeholder="Foto exterior del barco"
-                                photos={extSrc ? { [`cr${idx}-ext`]: extSrc } : cruisePhotos}
-                                onChange={(id, src) => setCruisePhotos(p => ({ ...p, [id]: src }))}
-                              />
-                            </div>
-                            <div style={{ height: 160 }}>
-                              <ImageSlot
-                                id={`cr${idx}-cabin`}
-                                placeholder="Foto del camarote"
-                                photos={cabinSrc ? { [`cr${idx}-cabin`]: cabinSrc } : cruisePhotos}
-                                onChange={(id, src) => setCruisePhotos(p => ({ ...p, [id]: src }))}
-                              />
-                            </div>
+                          {/* Photo */}
+                          <div style={{ height: 200, marginBottom: 14 }}>
+                            <ImageSlot
+                              id={`cr${idx}-ext`}
+                              placeholder="Foto del barco"
+                              photos={extSrc ? { [`cr${idx}-ext`]: extSrc } : cruisePhotos}
+                              onChange={(id, src) => setCruisePhotos(p => ({ ...p, [id]: src }))}
+                            />
                           </div>
 
                           {/* Info grid */}
