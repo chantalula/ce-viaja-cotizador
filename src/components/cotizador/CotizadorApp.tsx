@@ -63,7 +63,7 @@ function seed(): QuoteDoc {
     cabin: 'Económica',
     pax: [{ name: '', type: 'Adulto', cabin: 'Económica' }],
     currency: 'USD', sellerIndex: 0, taxes: 0,
-    priceAdulto: 0, priceNino: 0, priceJubilado: 0,
+    priceAdulto: 0, priceNino: 0, priceJubilado: 0, priceInfante: 0,
     items: [],
   }
 }
@@ -84,9 +84,10 @@ function setPath(q: QuoteDoc, path: string, value: unknown): QuoteDoc {
 
 function totalOf(q: QuoteDoc) {
   const cnt = (t: string) => (q.pax || []).filter(p => p.type === t).length
-  return cnt('Adulto') * (Number(q.priceAdulto) || 0)
-       + cnt('Niño')   * (Number(q.priceNino)    || 0)
-       + cnt('Jubilado') * (Number(q.priceJubilado) || 0)
+  return cnt('Adulto')   * (Number(q.priceAdulto)   || 0)
+       + cnt('Niño')     * (Number(q.priceNino)      || 0)
+       + cnt('Jubilado') * (Number(q.priceJubilado)  || 0)
+       + cnt('Infante')  * (Number(q.priceInfante)   || 0)
 }
 
 function productSummary(q: QuoteDoc) {
@@ -848,9 +849,11 @@ export default function CotizadorApp() {
   const adultoCount   = (quote.pax || []).filter(p => p.type === 'Adulto').length
   const ninoCount     = (quote.pax || []).filter(p => p.type === 'Niño').length
   const jubCount      = (quote.pax || []).filter(p => p.type === 'Jubilado').length
-  const total = adultoCount * (quote.priceAdulto || 0)
-              + ninoCount   * (quote.priceNino    || 0)
-              + jubCount    * (quote.priceJubilado || 0)
+  const infanteCount  = (quote.pax || []).filter(p => p.type === 'Infante').length
+  const total = adultoCount  * (quote.priceAdulto   || 0)
+              + ninoCount    * (quote.priceNino      || 0)
+              + jubCount     * (quote.priceJubilado  || 0)
+              + infanteCount * (quote.priceInfante   || 0)
   const paxCount = (quote.pax || []).length
   const perPax = paxCount > 0 ? total / paxCount : total
   const totalFmt = money(total, quote.currency)
@@ -894,7 +897,7 @@ export default function CotizadorApp() {
 
   const stcColor: Record<string, string> = { Pendiente: '#B08400', Enviada: '#1763B0', Aceptada: '#1F8A5B' }
   const ITEM_LABELS: Record<string, string> = { flight: 'Vuelo', hotel: 'Hotel', cruise: 'Crucero', tour: 'Tour', transfer: 'Traslado', car: 'Carro' }
-  const PAX_CODE: Record<string, string> = { Adulto: 'ADT', Niño: 'CHD', Infante: 'INF' }
+  const PAX_CODE: Record<string, string> = { Adulto: 'ADT', Niño: 'CHD', Jubilado: 'JUB', Infante: 'INF' }
 
   // ─── Styles ───────────────────────────────────────────────────────────────────
 
@@ -1520,7 +1523,7 @@ export default function CotizadorApp() {
           <div style={{ background: '#fff', border: '1px solid #EAEFF4', borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: '#0F3D7A', marginBottom: 12 }}>Precios</div>
 
-            {([['priceAdulto', 'Adulto', adultoCount], ['priceNino', 'Niño', ninoCount], ['priceJubilado', 'Jubilado', jubCount]] as [keyof QuoteDoc, string, number][]).map(([field, label, cnt]) => (
+            {([['priceAdulto', 'Adulto', adultoCount], ['priceNino', 'Niño', ninoCount], ['priceJubilado', 'Jubilado', jubCount], ['priceInfante', 'Infante', infanteCount]] as [keyof QuoteDoc, string, number][]).map(([field, label, cnt]) => (
               <div key={field} style={{ marginBottom: 10 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ fontSize: 12, color: '#5B7186', flex: 1 }}>{label}</span>
@@ -1863,9 +1866,10 @@ export default function CotizadorApp() {
                     <div style={{ height: 1, background: '#EDF1F5', margin: '18px 0' }} />
                     <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.12em', color: '#0F3D7A', fontWeight: 800, marginBottom: 10 }}>Precio por pasajero</div>
                     <div style={{ fontSize: 13, color: '#15293F', lineHeight: 2 }}>
-                      {quote.priceAdulto > 0 && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#5B7186' }}>Adulto</span><span style={{ fontWeight: 700 }}>{money(quote.priceAdulto, quote.currency)}</span></div>}
-                      {quote.priceNino > 0 && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#5B7186' }}>Niño</span><span style={{ fontWeight: 700 }}>{money(quote.priceNino, quote.currency)}</span></div>}
-                      {quote.priceJubilado > 0 && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#5B7186' }}>Jubilado</span><span style={{ fontWeight: 700 }}>{money(quote.priceJubilado, quote.currency)}</span></div>}
+                      {quote.priceAdulto > 0 && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#5B7186' }}>Adulto (ADT)</span><span style={{ fontWeight: 700 }}>{money(quote.priceAdulto, quote.currency)}</span></div>}
+                      {quote.priceNino > 0 && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#5B7186' }}>Niño (CHD)</span><span style={{ fontWeight: 700 }}>{money(quote.priceNino, quote.currency)}</span></div>}
+                      {quote.priceJubilado > 0 && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#5B7186' }}>Jubilado (JUB)</span><span style={{ fontWeight: 700 }}>{money(quote.priceJubilado, quote.currency)}</span></div>}
+                      {quote.priceInfante > 0 && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#5B7186' }}>Infante (INF)</span><span style={{ fontWeight: 700 }}>{money(quote.priceInfante, quote.currency)}</span></div>}
                     </div>
                   </>
                 )}

@@ -130,6 +130,7 @@ export interface QuoteDoc {
   priceAdulto: number
   priceNino: number
   priceJubilado: number
+  priceInfante: number
   items: QuoteItem[]
   comments?: string
 }
