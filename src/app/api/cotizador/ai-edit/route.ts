@@ -27,12 +27,17 @@ CARRO: {"type":"car","category":"","model":"","pickupLocation":"","dropoffLocati
 
 Reglas:
 - Devuelve el JSON completo de la cotización con TODOS los campos, no solo los que cambiaron.
-- Para fotos de barco/carro: solo actualiza el campo "ship" o "model" con el nombre correcto — el sistema fetcha la foto automáticamente.
+- FOTOS: las fotos se buscan automáticamente según estos campos — NO hay campo de URL de foto en el JSON:
+  * Foto del barco (crucero): se busca por el campo "ship". Si piden foto del barco, asegúrate que "ship" tenga el nombre correcto.
+  * Foto del destino/puerto (crucero): se busca por el nombre del PRIMER puerto en "ports[0].port". Si piden foto de un destino, agrega o actualiza el primer puerto con ese lugar.
+  * Foto del carro: se busca por el campo "model". Si piden foto del carro, asegúrate que "model" tenga el modelo correcto.
+  * Foto del hotel: no se auto-busca, se sube manualmente.
+- Si la instrucción pide foto de un destino de crucero y no hay puertos, agrega el destino como primer puerto en el array ports.
 - Si la instrucción pide agregar un comentario o nota, ponlo en el campo "comments".
 - Si pide quitar algo, elimínalo del array items.
 - Si pide cambiar un precio, actualiza el campo correspondiente.
 - Mantén todos los campos existentes que no se mencionen en la instrucción.
-- Si la instrucción no es clara o no aplica, devuelve la cotización sin cambios y explica en "message".
+- NUNCA respondas que algo no se puede hacer por ser "visual" — las fotos siempre se controlan a través de los campos ship, model o ports[0].port.
 - Devuelve SOLO el JSON, sin markdown ni explicaciones fuera del JSON.`
 
 export async function POST(request: NextRequest) {
