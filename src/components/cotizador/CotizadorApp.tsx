@@ -698,27 +698,15 @@ export default function CotizadorApp() {
   async function fetchCarPhoto(model: string, idx: number) {
     if (!model.trim()) return
     try {
-      // Search Wikipedia for the car model
-      const searchRes = await fetch(
-        `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(model)}&srlimit=3&format=json&origin=*`
-      )
-      if (!searchRes.ok) return
-      const searchData = await searchRes.json()
-      const results: { title: string }[] = searchData.query?.search || []
-      for (const result of results) {
-        const pageRes = await fetch(
-          `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(result.title)}&prop=pageimages&format=json&pithumbsize=1200&origin=*`
-        )
-        if (!pageRes.ok) continue
-        const pageData = await pageRes.json()
-        const pages = pageData.query?.pages
-        if (!pages) continue
-        const page = Object.values(pages)[0] as { thumbnail?: { source: string } }
-        if (page?.thumbnail?.source) {
-          setCarPhotos(p => ({ ...p, [`car${idx}-photo`]: page.thumbnail!.source }))
-          return
-        }
-      }
+      const item = quote.items?.[idx] as CarItem | undefined
+      const res = await fetch('/api/cotizador/car-photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model, category: item?.category || '' }),
+      })
+      if (!res.ok) return
+      const data = await res.json() as { url?: string }
+      if (data.url) setCarPhotos(p => ({ ...p, [`car${idx}-photo`]: data.url! }))
     } catch { /* ignore */ }
   }
 
@@ -1934,39 +1922,54 @@ export default function CotizadorApp() {
                       const ca = item as CarItem
                       return (
                         <>
+                          {/* Header */}
                           <div style={{ marginBottom: 13, display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <div style={{ background: '#16A99C', color: '#fff', fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.12em', padding: '7px 14px', borderRadius: 6 }}>ALQUILER DE CARRO</div>
-                            {ca.promotion && <div style={{ background: '#FFF3CD', color: '#856404', fontFamily: 'Archivo, sans-serif', fontSize: 11, fontWeight: 700, padding: '5px 10px', borderRadius: 6 }}>{ca.promotion}</div>}
+                            <div style={{ background: '#0F3D7A', color: '#fff', fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.12em', padding: '7px 14px', borderRadius: 6 }}>🚗 ALQUILER DE VEHÍCULO</div>
+                            {ca.promotion && <div style={{ background: '#FFF3CD', color: '#856404', fontFamily: 'Archivo, sans-serif', fontSize: 11, fontWeight: 700, padding: '5px 10px', borderRadius: 6 }}>🏷️ {ca.promotion}</div>}
                           </div>
-                          <div style={{ border: '1px solid #E6EDF3', borderRadius: 10, overflow: 'hidden' }}>
-                            <div style={{ display: 'flex', gap: 16, padding: 16 }}>
-                              {/* Car photo */}
-                              <div style={{ width: 180, flexShrink: 0, height: 120 }}>
-                                <ImageSlot id={`car${idx}-photo`} placeholder="Foto del carro" photos={carPhotos} onChange={(id, src) => setCarPhotos(p => ({ ...p, [id]: src }))} />
+
+                          <div style={{ border: '1px solid #E6EDF3', borderRadius: 12, overflow: 'hidden' }}>
+                            {/* Car photo — full width, tall */}
+                            <div style={{ height: 200 }}>
+                              <ImageSlot id={`car${idx}-photo`} placeholder="Foto del vehículo" photos={carPhotos} onChange={(id, src) => setCarPhotos(p => ({ ...p, [id]: src }))} />
+                            </div>
+
+                            {/* Model + category + days */}
+                            <div style={{ padding: '14px 16px', borderBottom: '1px solid #EDF1F5', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div>
+                                {ca.category && <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 16, fontWeight: 800, color: '#0F3D7A' }}>{ca.category}</div>}
+                                {ca.model && <div style={{ fontSize: 13, color: '#5B7186', marginTop: 3 }}>{ca.model}</div>}
                               </div>
-                              <div style={{ flex: 1 }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                                  <div>
-                                    {ca.category && <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 15, fontWeight: 800, color: '#0F3D7A' }}>{ca.category}</div>}
-                                    {ca.model && <div style={{ fontSize: 13, color: '#5B7186', marginTop: 2 }}>{ca.model}</div>}
-                                  </div>
-                                  <div style={{ textAlign: 'right' }}>
-                                    {ca.days && <div style={{ fontSize: 12, color: '#9AA8B8' }}>{ca.days} días</div>}
-                                    {ca.protection && <div style={{ fontSize: 12, fontWeight: 700, color: '#16A99C' }}>{ca.protection}</div>}
-                                  </div>
+                              {ca.days && (
+                                <div style={{ background: '#EEF3FB', borderRadius: 8, padding: '8px 14px', textAlign: 'center' }}>
+                                  <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 20, fontWeight: 800, color: '#0F3D7A' }}>{ca.days}</div>
+                                  <div style={{ fontSize: 10, color: '#8896A6', letterSpacing: '.06em' }}>DÍAS</div>
                                 </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 16px', marginBottom: 10 }}>
-                                  {ca.pickupDate && <div><div style={{ fontSize: 10, color: '#9AA8B8' }}>RECOGIDA</div><div style={{ fontSize: 12, fontWeight: 600, color: '#15293F' }}>{ca.pickupDate}{ca.pickupLocation ? ' · ' + ca.pickupLocation : ''}</div></div>}
-                                  {ca.returnDate && <div><div style={{ fontSize: 10, color: '#9AA8B8' }}>DEVOLUCIÓN</div><div style={{ fontSize: 12, fontWeight: 600, color: '#15293F' }}>{ca.returnDate}{ca.dropoffLocation ? ' · ' + ca.dropoffLocation : ''}</div></div>}
-                                </div>
-                                <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-                                  {ca.passengers && <div style={{ fontSize: 12, color: '#5B7186' }}>👤 {ca.passengers}</div>}
-                                  {ca.bags && <div style={{ fontSize: 12, color: '#5B7186' }}>🧳 {ca.bags}</div>}
-                                  {ca.doors && <div style={{ fontSize: 12, color: '#5B7186' }}>🚪 {ca.doors} puertas</div>}
-                                  {ca.ac === 'Sí' && <div style={{ fontSize: 12, color: '#5B7186' }}>❄️ A/C</div>}
-                                  {ca.transmission && <div style={{ fontSize: 12, color: '#5B7186' }}>⚙️ {ca.transmission}</div>}
-                                </div>
+                              )}
+                            </div>
+
+                            {/* Pickup / Return */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1px solid #EDF1F5' }}>
+                              <div style={{ padding: '12px 16px', borderRight: '1px solid #EDF1F5' }}>
+                                <div style={{ fontSize: 10, color: '#16A99C', fontWeight: 700, letterSpacing: '.08em', marginBottom: 4 }}>📍 RECOGIDA</div>
+                                {ca.pickupDate && <div style={{ fontSize: 13, fontWeight: 700, color: '#15293F' }}>{ca.pickupDate}</div>}
+                                {ca.pickupLocation && <div style={{ fontSize: 12, color: '#5B7186', marginTop: 2 }}>{ca.pickupLocation}</div>}
                               </div>
+                              <div style={{ padding: '12px 16px' }}>
+                                <div style={{ fontSize: 10, color: '#E0483E', fontWeight: 700, letterSpacing: '.08em', marginBottom: 4 }}>🏁 DEVOLUCIÓN</div>
+                                {ca.returnDate && <div style={{ fontSize: 13, fontWeight: 700, color: '#15293F' }}>{ca.returnDate}</div>}
+                                {ca.dropoffLocation && <div style={{ fontSize: 12, color: '#5B7186', marginTop: 2 }}>{ca.dropoffLocation}</div>}
+                              </div>
+                            </div>
+
+                            {/* Features chips */}
+                            <div style={{ padding: '12px 16px', display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                              {ca.transmission && <div style={{ background: '#EEF3FB', color: '#0F3D7A', fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 20 }}>⚙️ {ca.transmission}</div>}
+                              {ca.ac === 'Sí' && <div style={{ background: '#E6F9F7', color: '#16A99C', fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 20 }}>❄️ Aire acondicionado</div>}
+                              {ca.passengers && <div style={{ background: '#F5F0FF', color: '#6B4EBF', fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 20 }}>👤 {ca.passengers} pasajeros</div>}
+                              {ca.bags && <div style={{ background: '#FFF8E6', color: '#B07A20', fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 20 }}>🧳 {ca.bags} maletas</div>}
+                              {ca.doors && <div style={{ background: '#F0F4F8', color: '#5B7186', fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 20 }}>🚪 {ca.doors} puertas</div>}
+                              {ca.protection && <div style={{ background: '#E6F9F7', color: '#16A99C', fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 20 }}>🛡️ {ca.protection}</div>}
                             </div>
                           </div>
                         </>
