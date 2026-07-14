@@ -1125,7 +1125,7 @@ export default function CotizadorApp() {
             <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr .8fr', gap: 10 }}>
               <div><span style={labelSt}>N.º (automático)</span><div style={{ border: '1px solid #E6ECF2', borderRadius: 8, padding: '7px 9px', fontSize: 13, color: '#0F3D7A', background: '#F4F7FA', fontWeight: 700 }}>{quote.number}</div></div>
               <label style={{ display: 'block' }}><span style={labelSt}>Fecha</span><input value={quote.date} onChange={e => onField('date', e.target.value)} style={inputSt} /></label>
-              <div><span style={labelSt}>Vigencia</span><div style={{ border: '1px solid #E6ECF2', borderRadius: 8, padding: '7px 9px', fontSize: 13, color: '#5B7186', background: '#F4F7FA' }}>24 horas</div></div>
+              <div><span style={labelSt}>Vigencia</span><input value={quote.validez} onChange={e => setQuote(q => ({ ...q, validez: e.target.value }))} placeholder="24 horas" style={{ width: '100%', border: '1px solid #D8E0E8', borderRadius: 8, padding: '7px 9px', fontSize: 13, color: '#15293F', outline: 'none', boxSizing: 'border-box' }} /></div>
             </div>
           </div>
 
