@@ -744,7 +744,7 @@ export default function CotizadorApp() {
   async function fetchShipPhotos(shipName: string, idx: number) {
     if (!shipName.trim()) return
     try {
-      // Exterior: Wikipedia MediaWiki API — request 2000px thumbnail (high quality)
+      // 1st try: exact Wikipedia article title
       const slug = shipName.trim().replace(/\s+/g, '_')
       const extRes = await fetch(
         `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(slug)}&prop=pageimages&format=json&pithumbsize=2000&origin=*`
@@ -753,13 +753,35 @@ export default function CotizadorApp() {
         const extData = await extRes.json()
         const pages = extData.query?.pages
         if (pages) {
-          const page = Object.values(pages)[0] as { thumbnail?: { source: string } }
+          const page = Object.values(pages)[0] as { thumbnail?: { source: string }; missing?: string }
           if (page?.thumbnail?.source) {
             setShipAutoPhoto(p => ({ ...p, [`${idx}-ext`]: page.thumbnail!.source }))
+            return
           }
         }
       }
 
+      // 2nd try: Wikipedia search (same approach as car photos)
+      const searchRes = await fetch(
+        `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(shipName + ' cruise ship')}&srlimit=3&format=json&origin=*`
+      )
+      if (!searchRes.ok) return
+      const searchData = await searchRes.json()
+      const results: { title: string }[] = searchData.query?.search || []
+      for (const result of results) {
+        const pageRes = await fetch(
+          `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(result.title)}&prop=pageimages&format=json&pithumbsize=2000&origin=*`
+        )
+        if (!pageRes.ok) continue
+        const pageData = await pageRes.json()
+        const pages = pageData.query?.pages
+        if (!pages) continue
+        const page = Object.values(pages)[0] as { thumbnail?: { source: string } }
+        if (page?.thumbnail?.source) {
+          setShipAutoPhoto(p => ({ ...p, [`${idx}-ext`]: page.thumbnail!.source }))
+          return
+        }
+      }
     } catch { /* ignore */ }
   }
 
