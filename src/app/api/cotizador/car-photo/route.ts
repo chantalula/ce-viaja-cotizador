@@ -49,11 +49,12 @@ export async function POST(request: NextRequest) {
     const cleanModel = query.replace(/\s*(o similar|or similar)\s*/i, '').trim()
 
     const url =
-      await pexels(`${cleanModel} white background`)
+      await pexels(`${cleanModel} isolated white background`)
+      ?? await pexels(`${cleanModel} car product photo white`)
       ?? await pexels(`${cleanModel} car studio`)
       ?? await wikipedia(cleanModel)
-      ?? await pexels(`${category} car white background`)
-      ?? await pexels('car white background studio')
+      ?? await pexels(`${category} car isolated white background`)
+      ?? await pexels('car isolated white background')
 
     return NextResponse.json({ url })
   } catch (err) {

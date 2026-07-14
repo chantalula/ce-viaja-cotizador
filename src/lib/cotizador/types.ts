@@ -91,6 +91,7 @@ export interface TransferItem {
 
 export interface CarItem {
   type: 'car'
+  company: string
   category: string
   model: string
   pickupLocation: string

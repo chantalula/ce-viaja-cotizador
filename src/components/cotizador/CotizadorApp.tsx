@@ -51,7 +51,7 @@ function newItem(type: string): QuoteItem {
   if (type === 'hotel') return { type: 'hotel', name: 'Hotel', stars: 0, location: '', address: '', checkIn: '', checkOut: '', nights: '', roomType: '', board: '', cancellation: '', price: 0 }
   if (type === 'cruise') return { type: 'cruise', line: '', ship: '', route: '', depart: '', nights: '', cabin: '', cabinLabel: '', boardingTime: '', ports: [], promotion: '', price: 0 }
   if (type === 'tour') return { type: 'tour', name: 'Tour', location: '', date: '', duration: '', includes: '', price: 0 }
-  if (type === 'car') return { type: 'car', category: '', model: '', pickupLocation: '', dropoffLocation: '', pickupDate: '', returnDate: '', days: '', passengers: '5', bags: '2', doors: '4', ac: 'Sí', transmission: 'Automático', protection: 'Protección Total', promotion: '', price: 0 }
+  if (type === 'car') return { type: 'car', company: '', category: '', model: '', pickupLocation: '', dropoffLocation: '', pickupDate: '', returnDate: '', days: '', passengers: '5', bags: '2', doors: '4', ac: 'Sí', transmission: 'Automático', protection: 'Protección Total', promotion: '', price: 0 }
   if (type === 'insurance') return { type: 'insurance', company: '', plan: '', destination: '', startDate: '', endDate: '', days: '', coverage: '', price: 0 }
   return { type: 'transfer', from: '', to: '', date: '', vehicle: '', mode: 'Privado', price: 0 }
 }
@@ -147,7 +147,7 @@ function normalizeItem(it: Record<string, unknown>): QuoteItem | null {
   if (it.type === 'cruise') return { type: 'cruise', line: (it.line as string) || '', ship: (it.ship as string) || '', route: (it.route as string) || '', depart: (it.depart as string) || '', nights: (it.nights as string) || '', cabin: (it.cabin as string) || '', cabinLabel: (it.cabinLabel as string) || '', boardingTime: (it.boardingTime as string) || '', ports: ((it.ports as unknown[]) || []).map((p) => ({ date: (p as Record<string,string>).date || '', port: (p as Record<string,string>).port || '', arr: (p as Record<string,string>).arr || '', dep: (p as Record<string,string>).dep || '' })), promotion: (it.promotion as string) || '', price: Number(it.price) || 0 }
   if (it.type === 'tour') return { type: 'tour', name: (it.name as string) || 'Tour', location: (it.location as string) || '', date: (it.date as string) || '', duration: (it.duration as string) || '', includes: (it.includes as string) || '', price: Number(it.price) || 0 }
   if (it.type === 'transfer') return { type: 'transfer', from: (it.from as string) || '', to: (it.to as string) || '', date: (it.date as string) || '', vehicle: (it.vehicle as string) || '', mode: (it.mode as string) || 'Privado', price: Number(it.price) || 0 }
-  if (it.type === 'car') return { type: 'car', category: (it.category as string) || '', model: (it.model as string) || '', pickupLocation: (it.pickupLocation as string) || '', dropoffLocation: (it.dropoffLocation as string) || '', pickupDate: (it.pickupDate as string) || '', returnDate: (it.returnDate as string) || '', days: (it.days as string) || '', passengers: (it.passengers as string) || '5', bags: (it.bags as string) || '2', doors: (it.doors as string) || '4', ac: (it.ac as string) || 'Sí', transmission: (it.transmission as string) || 'Automático', protection: (it.protection as string) || '', promotion: (it.promotion as string) || '', price: Number(it.price) || 0 }
+  if (it.type === 'car') return { type: 'car', company: (it.company as string) || '', category: (it.category as string) || '', model: (it.model as string) || '', pickupLocation: (it.pickupLocation as string) || '', dropoffLocation: (it.dropoffLocation as string) || '', pickupDate: (it.pickupDate as string) || '', returnDate: (it.returnDate as string) || '', days: (it.days as string) || '', passengers: (it.passengers as string) || '5', bags: (it.bags as string) || '2', doors: (it.doors as string) || '4', ac: (it.ac as string) || 'Sí', transmission: (it.transmission as string) || 'Automático', protection: (it.protection as string) || '', promotion: (it.promotion as string) || '', price: Number(it.price) || 0 }
   if (it.type === 'insurance') return { type: 'insurance', company: (it.company as string) || '', plan: (it.plan as string) || '', destination: (it.destination as string) || '', startDate: (it.startDate as string) || '', endDate: (it.endDate as string) || '', days: (it.days as string) || '', coverage: (it.coverage as string) || '', price: Number(it.price) || 0 }
   return null
 }
@@ -1512,7 +1512,8 @@ export default function CotizadorApp() {
                     const ca = item as CarItem
                     return (
                       <>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1.5fr 1fr', gap: 9, marginBottom: 9 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr 1.5fr 1fr', gap: 9, marginBottom: 9 }}>
+                          <label><span style={labelSt}>Arrendadora</span><input value={ca.company} onChange={e => onField('items.' + idx + '.company', e.target.value)} placeholder="Alamo, Dollar…" style={inputSt} /></label>
                           <label><span style={labelSt}>Categoría</span><input value={ca.category} onChange={e => onField('items.' + idx + '.category', e.target.value)} placeholder="Intermediate SUV" style={inputSt} /></label>
                           <label><span style={labelSt}>Modelo</span><input value={ca.model} onChange={e => onField('items.' + idx + '.model', e.target.value)} placeholder="Mazda CX-50 o similar" style={inputSt} /></label>
                           <label><span style={labelSt}>Promoción</span><input value={ca.promotion} onChange={e => onField('items.' + idx + '.promotion', e.target.value)} placeholder="PROMO ★★★" style={inputSt} /></label>
@@ -1926,7 +1927,7 @@ export default function CotizadorApp() {
                         <>
                           {/* Header */}
                           <div style={{ marginBottom: 13, display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <div style={{ background: '#0F3D7A', color: '#fff', fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.12em', padding: '7px 14px', borderRadius: 6 }}>🚗 ALQUILER DE VEHÍCULO</div>
+                            <div style={{ background: '#0F3D7A', color: '#fff', fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.12em', padding: '7px 14px', borderRadius: 6 }}>🚗 ALQUILER DE VEHÍCULO{ca.company ? ' · ' + ca.company.toUpperCase() : ''}</div>
                             {ca.promotion && <div style={{ background: '#FFF3CD', color: '#856404', fontFamily: 'Archivo, sans-serif', fontSize: 11, fontWeight: 700, padding: '5px 10px', borderRadius: 6 }}>🏷️ {ca.promotion}</div>}
                           </div>
 
