@@ -603,6 +603,10 @@ export default function CotizadorApp() {
         if (newItems.length) updated.items = newItems
         updated.items.forEach((item, idx) => {
           if (item.type === 'flight') applyFlightCalcs(item as FlightItem)
+          if (item.type === 'hotel') {
+            const hi = item as HotelItem
+            if (hi.name) fetchHotelPhoto(hi.name, hi.location || '', idx)
+          }
           if (item.type === 'cruise') {
             const ci = item as CruiseItem
             if (ci.ship) fetchShipPhotos(ci.ship, idx)
@@ -712,6 +716,34 @@ export default function CotizadorApp() {
         const page = Object.values(pages)[0] as { thumbnail?: { source: string } }
         if (page?.thumbnail?.source) {
           setCarPhotos(p => ({ ...p, [`car${idx}-photo`]: page.thumbnail!.source }))
+          return
+        }
+      }
+    } catch { /* ignore */ }
+  }
+
+  async function fetchHotelPhoto(hotelName: string, location: string, idx: number) {
+    if (!hotelName.trim()) return
+    try {
+      const query = location.trim() ? `${hotelName} ${location} hotel` : `${hotelName} hotel`
+      // 1st: search Wikipedia
+      const searchRes = await fetch(
+        `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srlimit=3&format=json&origin=*`
+      )
+      if (!searchRes.ok) return
+      const searchData = await searchRes.json()
+      const results: { title: string }[] = searchData.query?.search || []
+      for (const result of results) {
+        const pageRes = await fetch(
+          `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(result.title)}&prop=pageimages&format=json&pithumbsize=2000&origin=*`
+        )
+        if (!pageRes.ok) continue
+        const pageData = await pageRes.json()
+        const pages = pageData.query?.pages
+        if (!pages) continue
+        const page = Object.values(pages)[0] as { thumbnail?: { source: string } }
+        if (page?.thumbnail?.source) {
+          setHotelPhotos(p => ({ ...p, [`h${idx}-p1`]: page.thumbnail!.source }))
           return
         }
       }
@@ -830,6 +862,25 @@ export default function CotizadorApp() {
       const idx = parseInt(carMatch[1])
       setQuote(q => {
         if ((q.items[idx] as CarItem)?.type === 'car') { fetchCarPhoto(value, idx) }
+        return q
+      })
+    }
+    // Auto-fetch hotel photo when hotel name or location changes
+    const hotelNameMatch = path.match(/^items\.(\d+)\.name$/)
+    if (hotelNameMatch && typeof value === 'string') {
+      const idx = parseInt(hotelNameMatch[1])
+      setQuote(q => {
+        const item = q.items[idx] as HotelItem
+        if (item?.type === 'hotel') fetchHotelPhoto(value, item.location || '', idx)
+        return q
+      })
+    }
+    const hotelLocMatch = path.match(/^items\.(\d+)\.location$/)
+    if (hotelLocMatch && typeof value === 'string') {
+      const idx = parseInt(hotelLocMatch[1])
+      setQuote(q => {
+        const item = q.items[idx] as HotelItem
+        if (item?.type === 'hotel' && item.name) fetchHotelPhoto(item.name, value, idx)
         return q
       })
     }
@@ -1658,7 +1709,7 @@ export default function CotizadorApp() {
                 <div style={{ fontSize: 13, color: '#5B7186', marginTop: 2, marginBottom: 14 }}>{paxSummary} · clase {cabinSummary}</div>
 
                 <div style={{ border: '1px solid #E6EDF3', borderRadius: 10, padding: '11px 14px', marginBottom: 22 }}>
-                  <div style={{ fontSize: 11, color: '#9AA8B8', letterSpacing: '.08em', marginBottom: 6 }}>PASAJEROS</div>
+                  <div style={{ fontSize: 11, color: '#9AA8B8', letterSpacing: '.08em', marginBottom: 6 }}>{quote.items?.some(i => i.type === 'hotel') ? 'HUÉSPEDES' : 'PASAJEROS'}</div>
                   {(quote.pax || []).map((p, i) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, color: '#15293F', padding: '4px 0' }}>
                       <span style={{ fontWeight: 600 }}>{i + 1}.&nbsp;&nbsp;{(p.name || '').toUpperCase()}</span>
