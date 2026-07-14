@@ -1941,7 +1941,17 @@ export default function CotizadorApp() {
 
       {/* ── MODAL: AI IMPORT ─────────────────────────────────────────────── */}
       {showImport && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,41,63,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 24 }}>
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(15,41,63,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 24 }}
+          onPaste={e => {
+            const items = Array.from(e.clipboardData.items)
+            const images = items.filter(it => it.kind === 'file' && it.type.startsWith('image/'))
+            if (images.length === 0) return
+            const files = images.map(it => it.getAsFile()).filter(Boolean) as File[]
+            setImportFiles(prev => [...prev, ...files])
+            setImportError('')
+          }}
+        >
           <div style={{ background: '#fff', borderRadius: 16, width: 560, maxWidth: '100%', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,.32)' }}>
             <div style={{ padding: '22px 24px', borderBottom: '1px solid #EDF1F5', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 17, fontWeight: 800, color: '#0F3D7A' }}>✨ Rellenar con IA</div>
@@ -1981,7 +1991,7 @@ export default function CotizadorApp() {
                   }}
                 />
                 <div style={{ fontSize: 13, color: '#0F3D7A', fontWeight: 700 }}>📎 Agregar fotos, PDF o documentos</div>
-                <div style={{ fontSize: 11, color: '#9AA8B8', marginTop: 4 }}>Selecciona varios a la vez o arrastra aquí · La IA los combina en una sola cotización</div>
+                <div style={{ fontSize: 11, color: '#9AA8B8', marginTop: 4 }}>Selecciona, arrastra o <b style={{ color: '#0F3D7A' }}>pega una imagen con Cmd+V / Ctrl+V</b></div>
               </label>
 
               {/* File list */}
