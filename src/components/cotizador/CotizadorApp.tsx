@@ -1235,9 +1235,9 @@ export default function CotizadorApp() {
             <button onClick={() => onAction('addPax', 0)} style={{ border: '1px dashed #BFD3E6', background: '#fff', color: '#0F3D7A', fontWeight: 700, fontSize: 12, padding: '7px 0', borderRadius: 8, cursor: 'pointer', width: '100%' }}>+ Pasajero</button>
           </div>
 
-          {/* Vendedora */}
+          {/* Vendedor */}
           <div style={{ background: '#fff', border: '1px solid #EAEFF4', borderRadius: 12, padding: 16, marginBottom: 14 }}>
-            <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: '#0F3D7A', marginBottom: 12 }}>Vendedora</div>
+            <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: '#0F3D7A', marginBottom: 12 }}>Vendedor</div>
             <select value={quote.sellerIndex} onChange={e => onField('sellerIndex', parseInt(e.target.value))} style={{ width: '100%', border: '1px solid #D8E0E8', borderRadius: 8, padding: '8px 9px', fontSize: 13, color: '#15293F', background: '#fff', outline: 'none' }}>
               {SELLERS.map((s, i) => <option key={i} value={i}>{s.name}</option>)}
             </select>
@@ -2036,7 +2036,7 @@ export default function CotizadorApp() {
             <div style={{ padding: '14px 24px', display: 'flex', gap: 10, flexWrap: 'wrap', borderBottom: '1px solid #EDF1F5' }}>
               <input value={filterText} onChange={e => setFilterText(e.target.value)} placeholder="Buscar por cliente o número…" style={{ flex: 1, minWidth: 180, border: '1px solid #D8E0E8', borderRadius: 8, padding: '8px 10px', fontSize: 13, color: '#15293F', outline: 'none', fontFamily: 'Manrope, sans-serif' }} />
               <select value={filterSeller} onChange={e => setFilterSeller(parseInt(e.target.value))} style={{ border: '1px solid #D8E0E8', borderRadius: 8, padding: 8, fontSize: 13, color: '#15293F', background: '#fff', outline: 'none' }}>
-                <option value="-1">Todas las vendedoras</option>
+                <option value="-1">Todas las vendedores</option>
                 {SELLERS.map((s, i) => <option key={i} value={i}>{s.name}</option>)}
               </select>
               <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ border: '1px solid #D8E0E8', borderRadius: 8, padding: 8, fontSize: 13, color: '#15293F', background: '#fff', outline: 'none' }}>
