@@ -725,52 +725,15 @@ export default function CotizadorApp() {
   async function fetchHotelPhoto(hotelName: string, location: string, idx: number) {
     if (!hotelName.trim()) return
     try {
-      const query = location.trim() ? `${hotelName} ${location}` : hotelName
-
-      // 1st: Wikipedia article search
-      const searchRes = await fetch(
-        `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query + ' hotel')}&srlimit=3&format=json&origin=*`
-      )
-      if (searchRes.ok) {
-        const searchData = await searchRes.json()
-        const results: { title: string }[] = searchData.query?.search || []
-        for (const result of results) {
-          const pageRes = await fetch(
-            `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(result.title)}&prop=pageimages&format=json&pithumbsize=2000&origin=*`
-          )
-          if (!pageRes.ok) continue
-          const pageData = await pageRes.json()
-          const pages = pageData.query?.pages
-          if (!pages) continue
-          const page = Object.values(pages)[0] as { thumbnail?: { source: string } }
-          if (page?.thumbnail?.source) {
-            setHotelPhotos(p => ({ ...p, [`h${idx}-p1`]: page.thumbnail!.source }))
-            return
-          }
-        }
-      }
-
-      // 2nd: Wikimedia Commons search
-      const commonsRes = await fetch(
-        `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query + ' hotel exterior')}&srnamespace=6&srlimit=5&format=json&origin=*`
-      )
-      if (!commonsRes.ok) return
-      const commonsData = await commonsRes.json()
-      const files: { title: string }[] = commonsData.query?.search || []
-      for (const file of files) {
-        const imgRes = await fetch(
-          `https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(file.title)}&prop=imageinfo&iiprop=url&iiurlwidth=2000&format=json&origin=*`
-        )
-        if (!imgRes.ok) continue
-        const imgData = await imgRes.json()
-        const imgPages = imgData.query?.pages
-        if (!imgPages) continue
-        const imgPage = Object.values(imgPages)[0] as { imageinfo?: { thumburl?: string; url: string }[] }
-        const url = imgPage?.imageinfo?.[0]?.thumburl || imgPage?.imageinfo?.[0]?.url
-        if (url) {
-          setHotelPhotos(p => ({ ...p, [`h${idx}-p1`]: url }))
-          return
-        }
+      const res = await fetch('/api/cotizador/hotel-photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: hotelName, location }),
+      })
+      if (!res.ok) return
+      const data = await res.json() as { url?: string }
+      if (data.url) {
+        setHotelPhotos(p => ({ ...p, [`h${idx}-p1`]: data.url! }))
       }
     } catch { /* ignore */ }
   }
