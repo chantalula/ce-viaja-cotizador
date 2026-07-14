@@ -192,7 +192,7 @@ function buildSummary(q: QuoteDoc) {
   L.push('Subtotal: ' + money(sub, q.currency) + ' ' + q.currency)
   L.push('TOTAL: ' + money(sub + (Number(q.taxes) || 0), q.currency) + ' ' + q.currency)
   L.push('')
-  L.push('Tu asesora: ' + s.name + ' · ' + s.phone + ' · ' + s.email)
+  L.push('Tu asesor: ' + s.name + ' · ' + s.phone + ' · ' + s.email)
   return L.join('\n')
 }
 
@@ -1814,7 +1814,7 @@ export default function CotizadorApp() {
                 </div>
 
                 <div style={{ height: 1, background: '#EDF1F5', margin: '20px 0' }} />
-                <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.12em', color: '#0F3D7A', fontWeight: 800 }}>Tu asesora</div>
+                <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.12em', color: '#0F3D7A', fontWeight: 800 }}>Tu asesor</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
                   <div style={{ width: 42, height: 42, borderRadius: '50%', background: '#134A99', color: '#fff', fontFamily: 'Archivo, sans-serif', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{seller.initials}</div>
                   <div style={{ minWidth: 0 }}>
