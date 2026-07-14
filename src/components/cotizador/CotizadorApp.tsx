@@ -13,6 +13,7 @@ import type {
   TourItem,
   TransferItem,
   CarItem,
+  InsuranceItem,
   QuoteDoc,
   QuoteItem,
   SavedQuote,
@@ -51,6 +52,7 @@ function newItem(type: string): QuoteItem {
   if (type === 'cruise') return { type: 'cruise', line: '', ship: '', route: '', depart: '', nights: '', cabin: '', cabinLabel: '', boardingTime: '', ports: [], promotion: '', price: 0 }
   if (type === 'tour') return { type: 'tour', name: 'Tour', location: '', date: '', duration: '', includes: '', price: 0 }
   if (type === 'car') return { type: 'car', category: '', model: '', pickupLocation: '', dropoffLocation: '', pickupDate: '', returnDate: '', days: '', passengers: '5', bags: '2', doors: '4', ac: 'Sí', transmission: 'Automático', protection: 'Protección Total', promotion: '', price: 0 }
+  if (type === 'insurance') return { type: 'insurance', company: '', plan: '', destination: '', startDate: '', endDate: '', days: '', coverage: '', price: 0 }
   return { type: 'transfer', from: '', to: '', date: '', vehicle: '', mode: 'Privado', price: 0 }
 }
 
@@ -91,7 +93,7 @@ function totalOf(q: QuoteDoc) {
 }
 
 function productSummary(q: QuoteDoc) {
-  const L: Record<string, string> = { flight: 'Vuelo', hotel: 'Hotel', cruise: 'Crucero', tour: 'Tour', transfer: 'Traslado', car: 'Carro' }
+  const L: Record<string, string> = { flight: 'Vuelo', hotel: 'Hotel', cruise: 'Crucero', tour: 'Tour', transfer: 'Traslado', car: 'Carro', insurance: 'Seguro' }
   const c: Record<string, number> = {}
   ;(q.items || []).forEach(it => { c[it.type] = (c[it.type] || 0) + 1 })
   return Object.keys(c).map(k => c[k] + '× ' + L[k]).join(' · ') || '—'
@@ -146,6 +148,7 @@ function normalizeItem(it: Record<string, unknown>): QuoteItem | null {
   if (it.type === 'tour') return { type: 'tour', name: (it.name as string) || 'Tour', location: (it.location as string) || '', date: (it.date as string) || '', duration: (it.duration as string) || '', includes: (it.includes as string) || '', price: Number(it.price) || 0 }
   if (it.type === 'transfer') return { type: 'transfer', from: (it.from as string) || '', to: (it.to as string) || '', date: (it.date as string) || '', vehicle: (it.vehicle as string) || '', mode: (it.mode as string) || 'Privado', price: Number(it.price) || 0 }
   if (it.type === 'car') return { type: 'car', category: (it.category as string) || '', model: (it.model as string) || '', pickupLocation: (it.pickupLocation as string) || '', dropoffLocation: (it.dropoffLocation as string) || '', pickupDate: (it.pickupDate as string) || '', returnDate: (it.returnDate as string) || '', days: (it.days as string) || '', passengers: (it.passengers as string) || '5', bags: (it.bags as string) || '2', doors: (it.doors as string) || '4', ac: (it.ac as string) || 'Sí', transmission: (it.transmission as string) || 'Automático', protection: (it.protection as string) || '', promotion: (it.promotion as string) || '', price: Number(it.price) || 0 }
+  if (it.type === 'insurance') return { type: 'insurance', company: (it.company as string) || '', plan: (it.plan as string) || '', destination: (it.destination as string) || '', startDate: (it.startDate as string) || '', endDate: (it.endDate as string) || '', days: (it.days as string) || '', coverage: (it.coverage as string) || '', price: Number(it.price) || 0 }
   return null
 }
 
@@ -920,7 +923,7 @@ export default function CotizadorApp() {
   })
 
   const stcColor: Record<string, string> = { Pendiente: '#B08400', Enviada: '#1763B0', Aceptada: '#1F8A5B' }
-  const ITEM_LABELS: Record<string, string> = { flight: 'Vuelo', hotel: 'Hotel', cruise: 'Crucero', tour: 'Tour', transfer: 'Traslado', car: 'Carro' }
+  const ITEM_LABELS: Record<string, string> = { flight: 'Vuelo', hotel: 'Hotel', cruise: 'Crucero', tour: 'Tour', transfer: 'Traslado', car: 'Carro', insurance: 'Seguro' }
   const PAX_CODE: Record<string, string> = { Adulto: 'ADT', Niño: 'CHD', Jubilado: 'JUB', Infante: 'INF' }
 
   // ─── Styles ───────────────────────────────────────────────────────────────────
@@ -1283,7 +1286,7 @@ export default function CotizadorApp() {
           <div style={{ background: '#fff', border: '1px solid #EAEFF4', borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: '#0F3D7A', marginBottom: 12 }}>Productos</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 14 }}>
-              {['flight', 'hotel', 'cruise', 'tour', 'transfer', 'car'].map(t => (
+              {['flight', 'hotel', 'cruise', 'tour', 'transfer', 'car', 'insurance'].map(t => (
                 <button key={t} onClick={() => onAction('add', 0, undefined, t)} style={{ border: '1px solid #BFE6F2', background: '#EAF6FB', color: '#0F3D7A', fontWeight: 700, fontSize: 12, padding: '7px 11px', borderRadius: 8, cursor: 'pointer' }}>
                   + {ITEM_LABELS[t]}
                 </button>
@@ -1479,6 +1482,26 @@ export default function CotizadorApp() {
                             </select>
                           </label>
                         </div>
+                      </>
+                    )
+                  })()}
+
+                  {/* INSURANCE editor */}
+                  {item.type === 'insurance' && (() => {
+                    const ins = item as InsuranceItem
+                    return (
+                      <>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9, marginBottom: 9 }}>
+                          <label><span style={labelSt}>Aseguradora</span><input value={ins.company} onChange={e => onField('items.' + idx + '.company', e.target.value)} placeholder="Assist Card, AXA, Generali…" style={inputSt} /></label>
+                          <label><span style={labelSt}>Plan</span><input value={ins.plan} onChange={e => onField('items.' + idx + '.plan', e.target.value)} placeholder="Plan Premium" style={inputSt} /></label>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 9, marginBottom: 9 }}>
+                          <label><span style={labelSt}>Inicio</span><input value={ins.startDate} onChange={e => onField('items.' + idx + '.startDate', e.target.value)} placeholder="Lun 21 jul 2026" style={inputSt} /></label>
+                          <label><span style={labelSt}>Fin</span><input value={ins.endDate} onChange={e => onField('items.' + idx + '.endDate', e.target.value)} placeholder="Vie 1 ago 2026" style={inputSt} /></label>
+                          <label><span style={labelSt}>Días</span><input value={ins.days} onChange={e => onField('items.' + idx + '.days', e.target.value)} placeholder="12" style={inputSt} /></label>
+                        </div>
+                        <label style={{ display: 'block' }}><span style={labelSt}>Destino</span><input value={ins.destination} onChange={e => onField('items.' + idx + '.destination', e.target.value)} placeholder="Europa, Worldwide, USA…" style={inputSt} /></label>
+                        <label style={{ display: 'block', marginTop: 9 }}><span style={labelSt}>Coberturas incluidas</span><input value={ins.coverage} onChange={e => onField('items.' + idx + '.coverage', e.target.value)} placeholder="Médica, cancelación, equipaje, responsabilidad civil…" style={inputSt} /></label>
                       </>
                     )
                   })()}
@@ -1869,6 +1892,31 @@ export default function CotizadorApp() {
                                   {ca.transmission && <div style={{ fontSize: 12, color: '#5B7186' }}>⚙️ {ca.transmission}</div>}
                                 </div>
                               </div>
+                            </div>
+                          </div>
+                        </>
+                      )
+                    })()}
+
+                    {/* INSURANCE doc */}
+                    {item.type === 'insurance' && (() => {
+                      const ins = item as InsuranceItem
+                      return (
+                        <>
+                          <div style={{ marginBottom: 13, display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <div style={{ background: '#1A6B3C', color: '#fff', fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.12em', padding: '7px 14px', borderRadius: 6 }}>SEGURO DE VIAJE</div>
+                            {ins.company && <div style={{ fontSize: 13, fontWeight: 700, color: '#1A6B3C' }}>{ins.company}</div>}
+                          </div>
+                          <div style={{ border: '1px solid #D1E8D8', borderRadius: 10, overflow: 'hidden' }}>
+                            <div style={{ background: '#F0FAF3', padding: '10px 16px', borderBottom: '1px solid #D1E8D8' }}>
+                              <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 15, fontWeight: 800, color: '#1A6B3C' }}>{ins.plan}</div>
+                              {ins.destination && <div style={{ fontSize: 12, color: '#5B7186', marginTop: 2 }}>Destino: {ins.destination}</div>}
+                            </div>
+                            <div style={{ padding: '12px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px 16px' }}>
+                              {ins.startDate && <div><div style={{ fontSize: 10, color: '#9AA8B8' }}>INICIO</div><div style={{ fontSize: 12, fontWeight: 600, color: '#15293F' }}>{ins.startDate}</div></div>}
+                              {ins.endDate && <div><div style={{ fontSize: 10, color: '#9AA8B8' }}>FIN</div><div style={{ fontSize: 12, fontWeight: 600, color: '#15293F' }}>{ins.endDate}</div></div>}
+                              {ins.days && <div><div style={{ fontSize: 10, color: '#9AA8B8' }}>DÍAS</div><div style={{ fontSize: 12, fontWeight: 600, color: '#15293F' }}>{ins.days} días</div></div>}
+                              {ins.coverage && <div style={{ gridColumn: 'span 3' }}><div style={{ fontSize: 10, color: '#9AA8B8' }}>COBERTURAS</div><div style={{ fontSize: 12, fontWeight: 600, color: '#15293F' }}>{ins.coverage}</div></div>}
                             </div>
                           </div>
                         </>
