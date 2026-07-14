@@ -595,6 +595,8 @@ export default function CotizadorApp() {
           if (item.type === 'cruise') {
             const ci = item as CruiseItem
             if (ci.ship) fetchShipPhotos(ci.ship, idx)
+            const firstPort = ci.ports?.find(p => p.port?.trim())
+            if (firstPort) fetchPortPhoto(firstPort.port, idx)
           }
           if (item.type === 'car') {
             const ca = item as CarItem
@@ -724,29 +726,25 @@ export default function CotizadorApp() {
         }
       }
 
-      // Cabin: search Wikimedia Commons for "{ship} stateroom" or "{ship} cabin"
-      const cabinSearch = await fetch(
-        `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(shipName + ' stateroom balcony cabin interior')}&srnamespace=6&srlimit=5&format=json&origin=*`
+    } catch { /* ignore */ }
+  }
+
+  async function fetchPortPhoto(portName: string, idx: number) {
+    if (!portName.trim()) return
+    try {
+      // Extract city name — port strings are like "NASSAU, BAHAMAS" or "COZUMEL, MEXICO"
+      const city = portName.split(',')[0].trim()
+      const slug = city.replace(/\s+/g, '_')
+      const res = await fetch(
+        `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(slug)}&prop=pageimages&format=json&pithumbsize=2000&origin=*`
       )
-      if (cabinSearch.ok) {
-        const cabinData = await cabinSearch.json()
-        const results: { title: string }[] = cabinData.query?.search || []
-        for (const result of results) {
-          const filename = result.title // e.g. "File:Icon_of_the_seas_balcony.jpg"
-          const imgRes = await fetch(
-            `https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(filename)}&prop=imageinfo&iiprop=url&iiurlwidth=1500&format=json&origin=*`
-          )
-          if (!imgRes.ok) continue
-          const imgData = await imgRes.json()
-          const imgPages = imgData.query?.pages
-          if (!imgPages) continue
-          const imgPage = Object.values(imgPages)[0] as { imageinfo?: { thumburl?: string; url: string }[] }
-          const imgUrl = imgPage?.imageinfo?.[0]?.thumburl || imgPage?.imageinfo?.[0]?.url
-          if (imgUrl) {
-            setShipAutoPhoto(p => ({ ...p, [`${idx}-cabin`]: imgUrl }))
-            break
-          }
-        }
+      if (!res.ok) return
+      const data = await res.json()
+      const pages = data.query?.pages
+      if (!pages) return
+      const page = Object.values(pages)[0] as { thumbnail?: { source: string } }
+      if (page?.thumbnail?.source) {
+        setShipAutoPhoto(p => ({ ...p, [`${idx}-cabin`]: page.thumbnail!.source }))
       }
     } catch { /* ignore */ }
   }
@@ -775,6 +773,11 @@ export default function CotizadorApp() {
         if ((q.items[idx] as CarItem)?.type === 'car') { fetchCarPhoto(value, idx) }
         return q
       })
+    }
+    // Auto-fetch port photo when first port name changes
+    const portMatch = path.match(/^items\.(\d+)\.ports\.0\.port$/)
+    if (portMatch && typeof value === 'string' && value.trim()) {
+      fetchPortPhoto(value, parseInt(portMatch[1]))
     }
   }
 
