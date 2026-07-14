@@ -1459,7 +1459,7 @@ export default function CotizadorApp() {
                           <label><span style={labelSt}>Habitación</span><input value={hi.roomType} onChange={e => onField('items.' + idx + '.roomType', e.target.value)} placeholder="Doble Superior" style={inputSt} /></label>
                           <label><span style={labelSt}>Régimen</span><input value={hi.board} onChange={e => onField('items.' + idx + '.board', e.target.value)} placeholder="Desayuno incluido" style={inputSt} /></label>
                         </div>
-                        <label style={{ display: 'block', marginBottom: 9 }}><span style={labelSt}>Términos de cancelación</span><textarea value={hi.cancellation} onChange={e => onField('items.' + idx + '.cancellation', e.target.value)} placeholder="Ej: Cancelación gratuita hasta 48h antes del check-in. Después se cobra 1 noche." style={{ ...inputSt, height: 60, resize: 'vertical' as const }} /></label>
+                        <label style={{ display: 'block', marginBottom: 9 }}><span style={labelSt}>Cancelación</span><select value={hi.cancellation} onChange={e => onField('items.' + idx + '.cancellation', e.target.value)} style={{ ...inputSt }}><option value="">— Sin especificar —</option><option value="No reembolsable">No reembolsable</option><option value="Permite cancelación">Permite cancelación</option></select></label>
                         <div style={{ fontSize: 11, color: '#8896A6', marginTop: 4 }}>📷 Haz clic en los espacios de foto en el documento para agregar imágenes.</div>
                       </>
                     )
@@ -1811,7 +1811,7 @@ export default function CotizadorApp() {
                               <div><div style={{ fontSize: 11, color: '#9AA8B8' }}>CHECK-OUT</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{hi.checkOut}</div></div>
                               <div><div style={{ fontSize: 11, color: '#9AA8B8' }}>HABITACIÓN</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{hi.roomType}</div></div>
                               <div><div style={{ fontSize: 11, color: '#9AA8B8' }}>RÉGIMEN · {hi.nights} noches</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{hi.board}</div></div>
-                              {hi.cancellation && <div style={{ gridColumn: 'span 2', background: '#FFF8E6', borderRadius: 6, padding: '8px 10px', marginTop: 4 }}><div style={{ fontSize: 10, color: '#B07A20', fontWeight: 700, letterSpacing: '.06em', marginBottom: 3 }}>POLÍTICA DE CANCELACIÓN</div><div style={{ fontSize: 12, color: '#5B4A1A', lineHeight: 1.55 }}>{hi.cancellation}</div></div>}
+                              {hi.cancellation && <div style={{ gridColumn: 'span 2', background: hi.cancellation === 'No reembolsable' ? '#FFF0F0' : '#F0FBF9', borderRadius: 6, padding: '7px 10px', marginTop: 4, display: 'flex', alignItems: 'center', gap: 7 }}><span style={{ fontSize: 14 }}>{hi.cancellation === 'No reembolsable' ? '🚫' : '✅'}</span><span style={{ fontSize: 12, fontWeight: 700, color: hi.cancellation === 'No reembolsable' ? '#C0392B' : '#16A99C' }}>{hi.cancellation}</span></div>}
                             </div>
                             <div style={{ padding: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                               <div style={{ height: 140 }}>
