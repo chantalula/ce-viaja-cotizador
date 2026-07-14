@@ -2065,11 +2065,11 @@ export default function CotizadorApp() {
                   </div>
                 </div>
               )}
-              <div style={{ textAlign: 'center', fontSize: 11, color: '#9AA8B8', marginBottom: 10 }}>— o pega el texto —</div>
+              <div style={{ textAlign: 'center', fontSize: 11, color: '#9AA8B8', margin: '12px 0 10px' }}>— o escribe / pega el texto directamente —</div>
               <textarea
                 value={importText} onChange={e => setImportText(e.target.value)}
-                placeholder="Pega aquí el texto (itinerario, hotel, precios, pasaporte…)"
-                style={{ width: '100%', height: 120, border: '1px solid #D8E0E8', borderRadius: 10, padding: 10, fontSize: 12, fontFamily: 'monospace', color: '#15293F', resize: 'vertical', outline: 'none' }}
+                placeholder={'Escribe o pega aquí cualquier información:\n• Itinerario de vuelo (Sabre, PNR, texto de correo)\n• Detalles de hotel, crucero, tour o traslado\n• Precios y tarifas\n• Datos del pasaporte\n\nLa IA lo lee y rellena la cotización sola.'}
+                style={{ width: '100%', height: 150, border: '1.5px solid #BFD3E6', borderRadius: 10, padding: '10px 12px', fontSize: 12, fontFamily: 'inherit', color: '#15293F', resize: 'vertical', outline: 'none', background: '#F7FBFD', boxSizing: 'border-box' }}
               />
               {importMsg && <div style={{ fontSize: 12, color: '#16A99C', fontWeight: 600, marginTop: 12 }}>⏳ {importMsg}</div>}
               {importError && <div style={{ fontSize: 12, color: '#C0504D', fontWeight: 600, marginTop: 12 }}>⚠ {importError}</div>}
