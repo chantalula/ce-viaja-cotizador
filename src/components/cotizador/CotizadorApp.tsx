@@ -252,6 +252,11 @@ export default function CotizadorApp() {
   // keys: `${idx}-ext` (ship exterior) and `${idx}-cabin` (cabin interior)
   const [shipAutoPhoto, setShipAutoPhoto] = useState<Record<string, string>>({})
 
+  // AI edit state
+  const [aiCmd, setAiCmd] = useState('')
+  const [aiBusy, setAiBusy] = useState(false)
+  const [aiMsg, setAiMsg] = useState('')
+
   // UI state
   const [showImport, setShowImport] = useState(false)
   const [showDB, setShowDB] = useState(false)
@@ -705,6 +710,32 @@ export default function CotizadorApp() {
         }
       }
     } catch { /* ignore */ }
+  }
+
+  async function sendAiEdit() {
+    if (!aiCmd.trim() || aiBusy) return
+    setAiBusy(true)
+    setAiMsg('')
+    try {
+      const res = await fetch('/api/cotizador/ai-edit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quote, instruction: aiCmd }),
+      })
+      const data = await res.json()
+      if (data.error) { setAiMsg('Error: ' + data.error); return }
+      if (data.quote) {
+        setQuote(data.quote)
+        // Re-trigger photo fetches for any items that have changed
+        data.quote.items?.forEach((item: QuoteItem, idx: number) => {
+          if (item.type === 'cruise') { const ci = item as CruiseItem; if (ci.ship) fetchShipPhotos(ci.ship, idx) }
+          if (item.type === 'car') { const ca = item as CarItem; if (ca.model) fetchCarPhoto(ca.model, idx) }
+        })
+        setAiMsg(data.message || 'Listo.')
+        setAiCmd('')
+      }
+    } catch { setAiMsg('Error de conexión.') }
+    finally { setAiBusy(false) }
   }
 
   async function fetchShipPhotos(shipName: string, idx: number) {
@@ -1447,6 +1478,44 @@ export default function CotizadorApp() {
             ))}
           </div>
 
+          {/* Comentarios + IA */}
+          <div style={{ background: '#fff', border: '1px solid #EAEFF4', borderRadius: 12, padding: 16, marginBottom: 14 }}>
+            <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: '#0F3D7A', marginBottom: 10 }}>Comentarios</div>
+            <textarea
+              value={quote.comments || ''}
+              onChange={e => setQuote(q => ({ ...q, comments: e.target.value }))}
+              placeholder="Notas o comentarios para el cliente (aparecen en el documento)..."
+              rows={3}
+              style={{ width: '100%', border: '1px solid #D8E0E8', borderRadius: 8, padding: '8px 10px', fontSize: 12, color: '#15293F', resize: 'vertical', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
+            />
+            <div style={{ marginTop: 12, borderTop: '1px solid #EDF1F5', paddingTop: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#0F3D7A', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 8 }}>✨ Asistente IA</div>
+              <div style={{ fontSize: 11, color: '#9AA8B8', marginBottom: 8 }}>Escribe lo que quieres cambiar, agregar o quitar de la cotización</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  value={aiCmd}
+                  onChange={e => setAiCmd(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && sendAiEdit()}
+                  placeholder='Ej: "agrega un traslado al aeropuerto el 10 de julio"'
+                  style={{ flex: 1, border: '1px solid #D8E0E8', borderRadius: 8, padding: '8px 10px', fontSize: 12, color: '#15293F', outline: 'none' }}
+                  disabled={aiBusy}
+                />
+                <button
+                  onClick={sendAiEdit}
+                  disabled={aiBusy || !aiCmd.trim()}
+                  style={{ background: aiBusy || !aiCmd.trim() ? '#C8D5E2' : '#0F3D7A', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor: aiBusy || !aiCmd.trim() ? 'default' : 'pointer', whiteSpace: 'nowrap' }}
+                >
+                  {aiBusy ? '...' : 'Enviar'}
+                </button>
+              </div>
+              {aiMsg && (
+                <div style={{ marginTop: 8, fontSize: 11, color: aiMsg.startsWith('Error') ? '#D94F4F' : '#1A8A6E', background: aiMsg.startsWith('Error') ? '#FEF2F2' : '#F0FBF8', borderRadius: 6, padding: '6px 10px' }}>
+                  {aiMsg}
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Precio */}
           <div style={{ background: '#fff', border: '1px solid #EAEFF4', borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: '#0F3D7A', marginBottom: 12 }}>Precios</div>
@@ -1788,6 +1857,15 @@ export default function CotizadorApp() {
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#5B7186' }}>Clase</span><span style={{ fontWeight: 700 }}>{cabinSummary}</span></div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#5B7186' }}>Vigencia</span><span style={{ fontWeight: 700 }}>{quote.validez}</span></div>
                 </div>
+
+                {/* Comments */}
+                {quote.comments?.trim() && (
+                  <>
+                    <div style={{ height: 1, background: '#EDF1F5', margin: '18px 0' }} />
+                    <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.12em', color: '#0F3D7A', fontWeight: 800, marginBottom: 8 }}>Comentarios</div>
+                    <div style={{ fontSize: 12, color: '#5B7186', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{quote.comments}</div>
+                  </>
+                )}
 
                 {/* Per-type price breakdown */}
                 {(quote.priceAdulto > 0 || quote.priceNino > 0 || quote.priceJubilado > 0) && (

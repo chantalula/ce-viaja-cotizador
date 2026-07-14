@@ -131,6 +131,7 @@ export interface QuoteDoc {
   priceNino: number
   priceJubilado: number
   items: QuoteItem[]
+  comments?: string
 }
 
 export interface SavedQuote {
