@@ -731,10 +731,14 @@ export default function CotizadorApp() {
         body: JSON.stringify({ name: hotelName, location }),
       })
       if (!res.ok) return
-      const data = await res.json() as { url?: string }
-      if (data.url) {
-        setHotelPhotos(p => ({ ...p, [`h${idx}-p1`]: data.url! }))
-      }
+      const data = await res.json() as { urls?: (string | null)[] }
+      const [room, exterior, destination] = data.urls || []
+      setHotelPhotos(p => ({
+        ...p,
+        ...(room ? { [`h${idx}-p1`]: room } : {}),
+        ...(exterior ? { [`h${idx}-p2`]: exterior } : {}),
+        ...(destination ? { [`h${idx}-map`]: destination } : {}),
+      }))
     } catch { /* ignore */ }
   }
 

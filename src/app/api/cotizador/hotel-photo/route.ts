@@ -43,45 +43,76 @@ async function searchWikimediaCommons(query: string): Promise<string | null> {
   } catch { return null }
 }
 
+async function searchPexelsMultiple(queries: string[]): Promise<(string | null)[]> {
+  const key = process.env.PEXELS_API_KEY
+  if (!key) return queries.map(() => null)
+
+  return Promise.all(queries.map(async (query, i) => {
+    try {
+      const res = await fetch(
+        `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=${i + 1}&orientation=landscape`,
+        { headers: { Authorization: key } }
+      )
+      if (!res.ok) return null
+      const data = await res.json() as { photos?: { src: { large2x: string } }[] }
+      // Use a different result index per slot so photos don't repeat
+      const photos = data.photos || []
+      const pick = photos[Math.min(i, photos.length - 1)]
+      return pick?.src?.large2x ?? null
+    } catch { return null }
+  }))
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { name, location } = await request.json() as { name: string; location: string }
-    if (!name?.trim()) return NextResponse.json({ url: null })
+    if (!name?.trim()) return NextResponse.json({ urls: [null, null, null] })
 
-    // Step 1: Ask Claude for optimized search terms
-    let searchTerms = `${name} hotel ${location}`
+    // Step 1: Ask Claude for 3 search queries (room, exterior, destination)
+    let queries = [
+      `${name} hotel room interior ${location}`,
+      `${name} hotel exterior ${location}`,
+      `${location} destination travel`,
+    ]
     try {
       const claudeMsg = await client.messages.create({
         model: 'claude-sonnet-4-6',
-        max_tokens: 100,
+        max_tokens: 200,
         messages: [{
           role: 'user',
-          content: `Hotel: "${name}" en "${location || 'destino'}". Dame los mejores términos de búsqueda en inglés para encontrar fotos bonitas de este hotel específico en Pexels o Wikimedia Commons. Solo devuelve los términos, sin explicaciones. Ejemplo: "Marriott Cancun beachfront resort exterior"`,
+          content: `Hotel: "${name}" en "${location || 'destino'}". Dame 3 términos de búsqueda en inglés para Pexels, en JSON sin markdown:
+{"room": "...", "exterior": "...", "destination": "..."}
+- room: para buscar foto de habitación de este tipo de hotel
+- exterior: para buscar la fachada o área del hotel
+- destination: para buscar foto del destino/ciudad
+Solo JSON.`,
         }],
       })
-      const terms = claudeMsg.content[0]?.type === 'text' ? claudeMsg.content[0].text.trim() : ''
-      if (terms) searchTerms = terms
-    } catch { /* use default */ }
+      const raw = claudeMsg.content[0]?.type === 'text' ? claudeMsg.content[0].text.trim() : ''
+      const a = raw.indexOf('{'); const b = raw.lastIndexOf('}')
+      if (a >= 0 && b > a) {
+        const parsed = JSON.parse(raw.slice(a, b + 1)) as { room?: string; exterior?: string; destination?: string }
+        queries = [
+          parsed.room || queries[0],
+          parsed.exterior || queries[1],
+          parsed.destination || queries[2],
+        ]
+      }
+    } catch { /* use defaults */ }
 
-    // Step 2: Pexels with Claude's terms (primary — needs PEXELS_API_KEY in env)
-    const pexels1 = await searchPexels(searchTerms)
-    if (pexels1) return NextResponse.json({ url: pexels1 })
+    // Step 2: Fetch all 3 photos in parallel from Pexels
+    const pexelsResults = await searchPexelsMultiple(queries)
 
-    // Step 3: Pexels with generic hotel + location fallback
-    const pexels2 = await searchPexels(`hotel ${location} luxury resort`)
-    if (pexels2) return NextResponse.json({ url: pexels2 })
+    // Step 3: Fill gaps with Wikimedia Commons
+    const urls: (string | null)[] = await Promise.all(pexelsResults.map(async (url, i) => {
+      if (url) return url
+      const fallbackQuery = i === 2 ? `${location} travel destination` : `${name} ${location} hotel`
+      return searchWikimediaCommons(fallbackQuery)
+    }))
 
-    // Step 4: Wikimedia Commons
-    const wiki = await searchWikimediaCommons(searchTerms)
-    if (wiki) return NextResponse.json({ url: wiki })
-
-    // Step 5: Wikimedia Commons generic
-    const wiki2 = await searchWikimediaCommons(`${name} hotel exterior`)
-    if (wiki2) return NextResponse.json({ url: wiki2 })
-
-    return NextResponse.json({ url: null })
+    return NextResponse.json({ urls })
   } catch (err) {
     const msg = err instanceof Error ? err.message : ''
-    return NextResponse.json({ url: null, error: msg }, { status: 500 })
+    return NextResponse.json({ urls: [null, null, null], error: msg }, { status: 500 })
   }
 }
