@@ -35,11 +35,13 @@ export interface HotelItem {
   type: 'hotel'
   name: string
   location: string
+  address: string
   checkIn: string
   checkOut: string
   nights: string
   roomType: string
   board: string
+  cancellation: string
   price: number
   photos?: string[]
 }

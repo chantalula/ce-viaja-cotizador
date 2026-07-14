@@ -48,7 +48,7 @@ function newSeg(): Segment {
 
 function newItem(type: string): QuoteItem {
   if (type === 'flight') return { type: 'flight', dir: 'Ida', date: '', price: 0, baggage: '1 maleta 23 kg + equipaje de mano', segments: [newSeg()] }
-  if (type === 'hotel') return { type: 'hotel', name: 'Hotel', location: '', checkIn: '', checkOut: '', nights: '', roomType: '', board: '', price: 0 }
+  if (type === 'hotel') return { type: 'hotel', name: 'Hotel', location: '', address: '', checkIn: '', checkOut: '', nights: '', roomType: '', board: '', cancellation: '', price: 0 }
   if (type === 'cruise') return { type: 'cruise', line: '', ship: '', route: '', depart: '', nights: '', cabin: '', cabinLabel: '', boardingTime: '', ports: [], promotion: '', price: 0 }
   if (type === 'tour') return { type: 'tour', name: 'Tour', location: '', date: '', duration: '', includes: '', price: 0 }
   if (type === 'car') return { type: 'car', category: '', model: '', pickupLocation: '', dropoffLocation: '', pickupDate: '', returnDate: '', days: '', passengers: '5', bags: '2', doors: '4', ac: 'Sí', transmission: 'Automático', protection: 'Protección Total', promotion: '', price: 0 }
@@ -143,7 +143,7 @@ function normalizeItem(it: Record<string, unknown>): QuoteItem | null {
       segments: ((it.segments as unknown[]) || []).map((sg) => Object.assign(newSeg(), sg as object)),
     }
   }
-  if (it.type === 'hotel') return { type: 'hotel', name: (it.name as string) || 'Hotel', location: (it.location as string) || '', checkIn: (it.checkIn as string) || '', checkOut: (it.checkOut as string) || '', nights: (it.nights as string) || '', roomType: (it.roomType as string) || '', board: (it.board as string) || '', price: Number(it.price) || 0 }
+  if (it.type === 'hotel') return { type: 'hotel', name: (it.name as string) || 'Hotel', location: (it.location as string) || '', address: (it.address as string) || '', checkIn: (it.checkIn as string) || '', checkOut: (it.checkOut as string) || '', nights: (it.nights as string) || '', roomType: (it.roomType as string) || '', board: (it.board as string) || '', cancellation: (it.cancellation as string) || '', price: Number(it.price) || 0 }
   if (it.type === 'cruise') return { type: 'cruise', line: (it.line as string) || '', ship: (it.ship as string) || '', route: (it.route as string) || '', depart: (it.depart as string) || '', nights: (it.nights as string) || '', cabin: (it.cabin as string) || '', cabinLabel: (it.cabinLabel as string) || '', boardingTime: (it.boardingTime as string) || '', ports: ((it.ports as unknown[]) || []).map((p) => ({ date: (p as Record<string,string>).date || '', port: (p as Record<string,string>).port || '', arr: (p as Record<string,string>).arr || '', dep: (p as Record<string,string>).dep || '' })), promotion: (it.promotion as string) || '', price: Number(it.price) || 0 }
   if (it.type === 'tour') return { type: 'tour', name: (it.name as string) || 'Tour', location: (it.location as string) || '', date: (it.date as string) || '', duration: (it.duration as string) || '', includes: (it.includes as string) || '', price: Number(it.price) || 0 }
   if (it.type === 'transfer') return { type: 'transfer', from: (it.from as string) || '', to: (it.to as string) || '', date: (it.date as string) || '', vehicle: (it.vehicle as string) || '', mode: (it.mode as string) || 'Privado', price: Number(it.price) || 0 }
@@ -962,6 +962,8 @@ export default function CotizadorApp() {
   const totalFmt = money(total, quote.currency)
   const perPaxFmt = money2(perPax, quote.currency)
 
+  const hasHotel = (quote.items || []).some(i => i.type === 'hotel')
+
   const paxSummary = (() => {
     const c: Record<string, number> = {}
     ;(quote.pax || []).forEach(p => { c[p.type] = (c[p.type] || 0) + 1 })
@@ -969,7 +971,7 @@ export default function CotizadorApp() {
     if (c['Adulto']) parts.push(c['Adulto'] + (c['Adulto'] === 1 ? ' adulto' : ' adultos'))
     if (c['Niño']) parts.push(c['Niño'] + (c['Niño'] === 1 ? ' niño' : ' niños'))
     if (c['Infante']) parts.push(c['Infante'] + (c['Infante'] === 1 ? ' infante' : ' infantes'))
-    return parts.join(' · ') || 'Sin pasajeros'
+    return parts.join(' · ') || (hasHotel ? 'Sin huéspedes' : 'Sin pasajeros')
   })()
 
   const cabinSummary = (() => {
@@ -1326,7 +1328,7 @@ export default function CotizadorApp() {
                 </div>
               )}
             </div>
-            <div style={{ fontSize: 10, color: '#8896A6', textTransform: 'uppercase', letterSpacing: '.07em', fontWeight: 700, marginBottom: 6 }}>Pasajeros (como en la reserva)</div>
+            <div style={{ fontSize: 10, color: '#8896A6', textTransform: 'uppercase', letterSpacing: '.07em', fontWeight: 700, marginBottom: 6 }}>{hasHotel ? 'Huéspedes' : 'Pasajeros'} (como en la reserva)</div>
             {(quote.pax || []).map((p, i) => (
               <div key={i} style={{ border: '1px solid #EAEFF4', borderRadius: 9, padding: 9, marginBottom: 8, background: '#FAFCFE' }}>
                 <input value={p.name} onChange={e => onField('pax.' + i + '.name', e.target.value)} placeholder="Apellido / Nombre" style={{ ...inputSt, marginBottom: 7 }} />
@@ -1338,12 +1340,12 @@ export default function CotizadorApp() {
                     <option>Económica</option><option>Premium Economy</option><option>Ejecutiva</option><option>Primera</option>
                   </select>
                   {(quote.pax || []).length > 1 && (
-                    <button onClick={() => askDelete('¿Eliminar este pasajero?', () => onAction('removePax', i))} style={{ border: '1px solid #F0CFCF', background: '#fff', color: '#C0504D', width: 30, height: 32, borderRadius: 8, cursor: 'pointer', fontSize: 14, flexShrink: 0 }}>×</button>
+                    <button onClick={() => askDelete(hasHotel ? '¿Eliminar este huésped?' : '¿Eliminar este pasajero?', () => onAction('removePax', i))} style={{ border: '1px solid #F0CFCF', background: '#fff', color: '#C0504D', width: 30, height: 32, borderRadius: 8, cursor: 'pointer', fontSize: 14, flexShrink: 0 }}>×</button>
                   )}
                 </div>
               </div>
             ))}
-            <button onClick={() => onAction('addPax', 0)} style={{ border: '1px dashed #BFD3E6', background: '#fff', color: '#0F3D7A', fontWeight: 700, fontSize: 12, padding: '7px 0', borderRadius: 8, cursor: 'pointer', width: '100%' }}>+ Pasajero</button>
+            <button onClick={() => onAction('addPax', 0)} style={{ border: '1px dashed #BFD3E6', background: '#fff', color: '#0F3D7A', fontWeight: 700, fontSize: 12, padding: '7px 0', borderRadius: 8, cursor: 'pointer', width: '100%' }}>{hasHotel ? '+ Huésped' : '+ Pasajero'}</button>
           </div>
 
           {/* Vendedor */}
@@ -1447,16 +1449,18 @@ export default function CotizadorApp() {
                       <>
                         <label style={{ display: 'block', marginBottom: 9 }}><span style={labelSt}>Nombre del hotel</span><input value={hi.name} onChange={e => onField('items.' + idx + '.name', e.target.value)} style={inputSt} /></label>
                         <label style={{ display: 'block', marginBottom: 9 }}><span style={labelSt}>Ubicación</span><input value={hi.location} onChange={e => onField('items.' + idx + '.location', e.target.value)} style={inputSt} /></label>
+                        <label style={{ display: 'block', marginBottom: 9 }}><span style={labelSt}>Dirección</span><input value={hi.address} onChange={e => onField('items.' + idx + '.address', e.target.value)} placeholder="Av. Principal 123, Ciudad" style={inputSt} /></label>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 9, marginBottom: 9 }}>
                           <label><span style={labelSt}>Check-in</span><input value={hi.checkIn} onChange={e => onField('items.' + idx + '.checkIn', e.target.value)} style={inputSt} /></label>
                           <label><span style={labelSt}>Check-out</span><input value={hi.checkOut} onChange={e => onField('items.' + idx + '.checkOut', e.target.value)} style={inputSt} /></label>
                           <label><span style={labelSt}>Noches</span><input value={hi.nights} onChange={e => onField('items.' + idx + '.nights', e.target.value)} style={inputSt} /></label>
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9, marginBottom: 9 }}>
                           <label><span style={labelSt}>Habitación</span><input value={hi.roomType} onChange={e => onField('items.' + idx + '.roomType', e.target.value)} placeholder="Doble Superior" style={inputSt} /></label>
                           <label><span style={labelSt}>Régimen</span><input value={hi.board} onChange={e => onField('items.' + idx + '.board', e.target.value)} placeholder="Desayuno incluido" style={inputSt} /></label>
                         </div>
-                        <div style={{ fontSize: 11, color: '#8896A6', marginTop: 8 }}>📷 Haz clic en los espacios de foto en el documento para agregar imágenes.</div>
+                        <label style={{ display: 'block', marginBottom: 9 }}><span style={labelSt}>Términos de cancelación</span><textarea value={hi.cancellation} onChange={e => onField('items.' + idx + '.cancellation', e.target.value)} placeholder="Ej: Cancelación gratuita hasta 48h antes del check-in. Después se cobra 1 noche." style={{ ...inputSt, height: 60, resize: 'vertical' as const }} /></label>
+                        <div style={{ fontSize: 11, color: '#8896A6', marginTop: 4 }}>📷 Haz clic en los espacios de foto en el documento para agregar imágenes.</div>
                       </>
                     )
                   })()}
@@ -1706,7 +1710,7 @@ export default function CotizadorApp() {
                 <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 22, fontWeight: 800, color: '#9EE7DE' }}>{totalFmt}</div>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,.65)', letterSpacing: '.06em', marginBottom: 2 }}>POR PASAJERO</div>
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,.65)', letterSpacing: '.06em', marginBottom: 2 }}>{hasHotel ? 'POR HUÉSPED' : 'POR PASAJERO'}</div>
                 <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 16, fontWeight: 800, color: '#fff' }}>{perPaxFmt}</div>
               </div>
             </div>
@@ -1802,10 +1806,12 @@ export default function CotizadorApp() {
                           <div style={{ border: '1px solid #E6EDF3', borderRadius: 10, overflow: 'hidden' }}>
                             <div style={{ padding: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 16px', borderBottom: '1px solid #EDF1F5' }}>
                               <div style={{ gridColumn: 'span 2' }}><div style={{ fontSize: 11, color: '#9AA8B8' }}>UBICACIÓN</div><div style={{ fontSize: 14, fontWeight: 600, color: '#15293F' }}>{hi.location}</div></div>
+                              {hi.address && <div style={{ gridColumn: 'span 2' }}><div style={{ fontSize: 11, color: '#9AA8B8' }}>DIRECCIÓN</div><div style={{ fontSize: 13, color: '#5B7186' }}>{hi.address}</div></div>}
                               <div><div style={{ fontSize: 11, color: '#9AA8B8' }}>CHECK-IN</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{hi.checkIn}</div></div>
                               <div><div style={{ fontSize: 11, color: '#9AA8B8' }}>CHECK-OUT</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{hi.checkOut}</div></div>
                               <div><div style={{ fontSize: 11, color: '#9AA8B8' }}>HABITACIÓN</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{hi.roomType}</div></div>
                               <div><div style={{ fontSize: 11, color: '#9AA8B8' }}>RÉGIMEN · {hi.nights} noches</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{hi.board}</div></div>
+                              {hi.cancellation && <div style={{ gridColumn: 'span 2', background: '#FFF8E6', borderRadius: 6, padding: '8px 10px', marginTop: 4 }}><div style={{ fontSize: 10, color: '#B07A20', fontWeight: 700, letterSpacing: '.06em', marginBottom: 3 }}>POLÍTICA DE CANCELACIÓN</div><div style={{ fontSize: 12, color: '#5B4A1A', lineHeight: 1.55 }}>{hi.cancellation}</div></div>}
                             </div>
                             <div style={{ padding: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                               <div style={{ height: 140 }}>
@@ -2025,7 +2031,7 @@ export default function CotizadorApp() {
               <div style={{ width: 252, flexShrink: 0, background: '#fff', padding: '28px 24px' }}>
                 <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.12em', color: '#0F3D7A', fontWeight: 800 }}>Resumen</div>
                 <div style={{ marginTop: 14, fontSize: 13, color: '#15293F', lineHeight: 1.95 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#5B7186' }}>Pasajeros</span><span style={{ fontWeight: 700 }}>{paxSummary}</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#5B7186' }}>{hasHotel ? 'Huéspedes' : 'Pasajeros'}</span><span style={{ fontWeight: 700 }}>{paxSummary}</span></div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#5B7186' }}>Clase</span><span style={{ fontWeight: 700 }}>{cabinSummary}</span></div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#5B7186' }}>Vigencia</span><span style={{ fontWeight: 700 }}>{quote.validez}</span></div>
                 </div>
@@ -2043,7 +2049,7 @@ export default function CotizadorApp() {
                 {(quote.priceAdulto > 0 || quote.priceNino > 0 || quote.priceJubilado > 0) && (
                   <>
                     <div style={{ height: 1, background: '#EDF1F5', margin: '18px 0' }} />
-                    <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.12em', color: '#0F3D7A', fontWeight: 800, marginBottom: 10 }}>Precio por pasajero</div>
+                    <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.12em', color: '#0F3D7A', fontWeight: 800, marginBottom: 10 }}>{hasHotel ? 'Precio por huésped' : 'Precio por pasajero'}</div>
                     <div style={{ fontSize: 13, color: '#15293F', lineHeight: 2 }}>
                       {quote.priceAdulto > 0 && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#5B7186' }}>Adulto (ADT)</span><span style={{ fontWeight: 700 }}>{money(quote.priceAdulto, quote.currency)}</span></div>}
                       {quote.priceNino > 0 && <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#5B7186' }}>Niño (CHD)</span><span style={{ fontWeight: 700 }}>{money(quote.priceNino, quote.currency)}</span></div>}
@@ -2059,7 +2065,7 @@ export default function CotizadorApp() {
                   <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 27, fontWeight: 800, color: '#9EE7DE', marginBottom: 10 }}>{totalFmt}</div>
                   <div style={{ height: 1, background: 'rgba(255,255,255,.15)', marginBottom: 10 }} />
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 11, opacity: .8, letterSpacing: '.04em' }}>POR PASAJERO</span>
+                    <span style={{ fontSize: 11, opacity: .8, letterSpacing: '.04em' }}>{hasHotel ? 'POR HUÉSPED' : 'POR PASAJERO'}</span>
                     <span style={{ fontFamily: 'Archivo, sans-serif', fontSize: 15, fontWeight: 800, color: '#fff' }}>{perPaxFmt}</span>
                   </div>
                 </div>
