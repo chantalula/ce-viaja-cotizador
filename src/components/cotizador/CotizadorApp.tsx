@@ -1842,8 +1842,17 @@ export default function CotizadorApp() {
             </div>
 
             {/* Footer */}
-            <div style={{ padding: '14px 32px', background: '#0F3D7A', color: '#9FC0E8', fontSize: 11, textAlign: 'center', letterSpacing: '.04em' }}>
-              CE Viaja · Asesoría experta en cada viaje · Cotización válida {quote.validez}, sujeta a disponibilidad y cambios de tarifa
+            <div style={{ padding: '16px 32px 18px', background: '#0F3D7A', color: '#9FC0E8', fontSize: 10, lineHeight: 1.65 }}>
+              <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, letterSpacing: '.06em', marginBottom: 8 }}>
+                CE Viaja · Asesoría experta en cada viaje · Cotización válida {quote.validez}, sujeta a disponibilidad y cambios de tarifa
+              </div>
+              <div style={{ borderTop: '1px solid rgba(159,192,232,.25)', paddingTop: 9, color: 'rgba(159,192,232,.82)' }}>
+                <div style={{ fontWeight: 700, marginBottom: 4, fontSize: 10, letterSpacing: '.05em', textTransform: 'uppercase' }}>Términos y Condiciones</div>
+                <div>• Tarifas no reembolsables y sujetas a penalidades por cambios.</div>
+                <div>• La presente es únicamente una cotización; tarifas y disponibilidad pueden variar sin previo aviso hasta la emisión y confirmación de la reserva.</div>
+                <div>• Es responsabilidad del pasajero contar con un pasaporte con vigencia mínima de seis (6) meses y cumplir con todos los requisitos migratorios y sanitarios aplicables, incluyendo visas, vacunas (como fiebre amarilla), ESTA, eTA u otras autorizaciones de viaje.</div>
+                <div>• C. Viaja, S.A. no se hace responsable por la falta de documentación requerida ni por gastos adicionales no contemplados expresamente dentro del paquete contratado.</div>
+              </div>
             </div>
           </div>
         </div>
