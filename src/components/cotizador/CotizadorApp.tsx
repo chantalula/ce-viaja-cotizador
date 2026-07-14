@@ -268,7 +268,7 @@ export default function CotizadorApp() {
   const [showClients, setShowClients] = useState(false)
   const [toast, setToast] = useState('')
   const [pdfBusy, setPdfBusy] = useState(false)
-  const [pdfName, setPdfName] = useState('')
+  // pdfTitle is stored in quote.pdfTitle so it persists when saved/reloaded
   const [confirmDelete, setConfirmDelete] = useState<{ msg: string; onConfirm: () => void } | null>(null)
 
   // Import state
@@ -1017,7 +1017,7 @@ export default function CotizadorApp() {
     setPdfBusy(true)
     try {
       const blob = await generatePDFBlob()
-      const name = (pdfName.trim() || `CE-Viaja-${quote.number}`).replace(/\.pdf$/i, '')
+      const name = ((quote.pdfTitle || '').trim() || `CE-Viaja-${quote.number}`).replace(/\.pdf$/i, '')
       triggerDownload(blob, `${name}.pdf`)
     } finally {
       setPdfBusy(false)
@@ -1035,7 +1035,7 @@ export default function CotizadorApp() {
     setPdfBusy(true)
     try {
       const blob = await generatePDFBlob()
-      const filename = (pdfName.trim() || `CE-Viaja-${quote.number}`).replace(/\.pdf$/i, '') + '.pdf'
+      const filename = ((quote.pdfTitle || '').trim() || `CE-Viaja-${quote.number}`).replace(/\.pdf$/i, '') + '.pdf'
       const file = new File([blob], filename, { type: 'application/pdf' })
 
       // Mobile: native share with file
@@ -1059,7 +1059,7 @@ export default function CotizadorApp() {
     setPdfBusy(true)
     try {
       const blob = await generatePDFBlob()
-      const filename = (pdfName.trim() || `CE-Viaja-${quote.number}`).replace(/\.pdf$/i, '') + '.pdf'
+      const filename = ((quote.pdfTitle || '').trim() || `CE-Viaja-${quote.number}`).replace(/\.pdf$/i, '') + '.pdf'
       const file = new File([blob], filename, { type: 'application/pdf' })
 
       // Mobile: native share
@@ -1122,8 +1122,8 @@ export default function CotizadorApp() {
           >Correo</button>
           <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #C8D5E2', borderRadius: 9, overflow: 'hidden' }}>
             <input
-              value={pdfName}
-              onChange={e => setPdfName(e.target.value)}
+              value={quote.pdfTitle || ''}
+              onChange={e => setQuote(q => ({ ...q, pdfTitle: e.target.value }))}
               placeholder={`CE-Viaja-${quote.number}`}
               style={{ border: 'none', outline: 'none', fontSize: 12, color: '#15293F', padding: '9px 10px', width: 170, fontFamily: 'Manrope', background: '#fff' }}
             />

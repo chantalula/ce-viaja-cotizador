@@ -145,6 +145,7 @@ export interface QuoteDoc {
   priceInfante: number
   items: QuoteItem[]
   comments?: string
+  pdfTitle?: string
 }
 
 export interface SavedQuote {
