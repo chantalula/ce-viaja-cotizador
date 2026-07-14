@@ -32,7 +32,7 @@ export default function LoginPage() {
             onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
           />
           <div style={{ fontSize: 13, color: '#5B7186', letterSpacing: '.1em', textTransform: 'uppercase' }}>
-            Portal de Vendedoras
+            Portal de Vendedores
           </div>
         </div>
 
