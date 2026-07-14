@@ -1844,7 +1844,7 @@ export default function CotizadorApp() {
             {/* Footer */}
             <div style={{ padding: '16px 32px 18px', background: '#0F3D7A', color: '#9FC0E8', fontSize: 10, lineHeight: 1.65 }}>
               <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, letterSpacing: '.06em', marginBottom: 8 }}>
-                CE Viaja · Asesoría experta en cada viaje · Cotización válida {quote.validez}, sujeta a disponibilidad y cambios de tarifa
+                CE Viaja · Asesoría experta en cada viaje · Cotización válida {quote.validez}
               </div>
               <div style={{ borderTop: '1px solid rgba(159,192,232,.25)', paddingTop: 9, color: 'rgba(159,192,232,.82)' }}>
                 <div style={{ fontWeight: 700, marginBottom: 4, fontSize: 10, letterSpacing: '.05em', textTransform: 'uppercase' }}>Términos y Condiciones</div>
