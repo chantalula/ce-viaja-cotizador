@@ -202,9 +202,11 @@ function buildSummary(q: QuoteDoc) {
 
 // ─── Image slot component ─────────────────────────────────────────────────────
 
-function ImageSlot({ id, placeholder, photos, onChange }: {
+function ImageSlot({ id, placeholder, photos, onChange, objectFit = 'cover', bg }: {
   id: string; placeholder: string; photos: Record<string, string>;
   onChange: (id: string, src: string) => void
+  objectFit?: 'cover' | 'contain'
+  bg?: string
 }) {
   const src = photos[id]
   const ref = useRef<HTMLInputElement>(null)
@@ -213,12 +215,12 @@ function ImageSlot({ id, placeholder, photos, onChange }: {
       onClick={() => ref.current?.click()}
       style={{
         width: '100%', height: '100%', borderRadius: 10, border: '1.5px dashed #CFD9E3',
-        background: src ? 'transparent' : '#F7FBFD', overflow: 'hidden', cursor: 'pointer',
+        background: src ? (bg ?? 'transparent') : '#F7FBFD', overflow: 'hidden', cursor: 'pointer',
         display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative',
       }}
     >
       {src
-        ? <img src={src} alt={placeholder} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        ? <img src={src} alt={placeholder} style={{ width: '100%', height: '100%', objectFit }} />
         : <span style={{ fontSize: 11, color: '#9AA8B8', textAlign: 'center', padding: '0 8px' }}>{placeholder}</span>
       }
       <input
@@ -1929,19 +1931,18 @@ export default function CotizadorApp() {
                           </div>
 
                           <div style={{ border: '1px solid #E6EDF3', borderRadius: 12, overflow: 'hidden' }}>
-                            {/* Car photo — full width, tall */}
-                            <div style={{ height: 200 }}>
-                              <ImageSlot id={`car${idx}-photo`} placeholder="Foto del vehículo" photos={carPhotos} onChange={(id, src) => setCarPhotos(p => ({ ...p, [id]: src }))} />
-                            </div>
-
-                            {/* Model + category + days */}
-                            <div style={{ padding: '14px 16px', borderBottom: '1px solid #EDF1F5', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <div>
-                                {ca.category && <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 16, fontWeight: 800, color: '#0F3D7A' }}>{ca.category}</div>}
-                                {ca.model && <div style={{ fontSize: 13, color: '#5B7186', marginTop: 3 }}>{ca.model}</div>}
+                            {/* Model + category + days + photo inline */}
+                            <div style={{ padding: '14px 16px', borderBottom: '1px solid #EDF1F5', display: 'flex', alignItems: 'center', gap: 16 }}>
+                              {/* Square photo, small, white bg */}
+                              <div style={{ width: 130, height: 90, flexShrink: 0 }}>
+                                <ImageSlot id={`car${idx}-photo`} placeholder="Foto" photos={carPhotos} onChange={(id, src) => setCarPhotos(p => ({ ...p, [id]: src }))} objectFit="contain" bg="#fff" />
+                              </div>
+                              <div style={{ flex: 1 }}>
+                                {ca.category && <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 15, fontWeight: 800, color: '#0F3D7A' }}>{ca.category}</div>}
+                                {ca.model && <div style={{ fontSize: 12, color: '#5B7186', marginTop: 3 }}>{ca.model}</div>}
                               </div>
                               {ca.days && (
-                                <div style={{ background: '#EEF3FB', borderRadius: 8, padding: '8px 14px', textAlign: 'center' }}>
+                                <div style={{ background: '#EEF3FB', borderRadius: 8, padding: '8px 14px', textAlign: 'center', flexShrink: 0 }}>
                                   <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 20, fontWeight: 800, color: '#0F3D7A' }}>{ca.days}</div>
                                   <div style={{ fontSize: 10, color: '#8896A6', letterSpacing: '.06em' }}>DÍAS</div>
                                 </div>
