@@ -656,8 +656,8 @@ export default function CotizadorApp() {
         const dur = calcFlightDuration(seg.from, seg.dep, seg.to, seg.arr, fi.date, seg.plus)
         if (dur) {
           seg.duration = dur
-        } else if (!seg.duration) {
-          // Simple arithmetic fallback (no timezone correction)
+        } else {
+          // Arithmetic fallback — runs always so AI-imported durations without TZ correction get replaced
           const [dh, dm] = seg.dep.split(':').map(Number)
           const [ah, am] = seg.arr.split(':').map(Number)
           const plusD = parseInt((seg.plus || '').replace(/\D/g, '') || '0')
