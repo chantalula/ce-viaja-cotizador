@@ -257,6 +257,7 @@ export default function CotizadorApp() {
   const [aiCmd, setAiCmd] = useState('')
   const [aiBusy, setAiBusy] = useState(false)
   const [aiMsg, setAiMsg] = useState('')
+  const [aiFiles, setAiFiles] = useState<File[]>([])
 
   // UI state
   const [showImport, setShowImport] = useState(false)
@@ -715,26 +716,26 @@ export default function CotizadorApp() {
   }
 
   async function sendAiEdit() {
-    if (!aiCmd.trim() || aiBusy) return
+    if ((!aiCmd.trim() && aiFiles.length === 0) || aiBusy) return
     setAiBusy(true)
     setAiMsg('')
     try {
-      const res = await fetch('/api/cotizador/ai-edit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ quote, instruction: aiCmd }),
-      })
+      const fd = new FormData()
+      fd.append('quote', JSON.stringify(quote))
+      fd.append('instruction', aiCmd)
+      aiFiles.forEach(f => fd.append('files', f))
+      const res = await fetch('/api/cotizador/ai-edit', { method: 'POST', body: fd })
       const data = await res.json()
       if (data.error) { setAiMsg('Error: ' + data.error); return }
       if (data.quote) {
         setQuote(data.quote)
-        // Re-trigger photo fetches for any items that have changed
         data.quote.items?.forEach((item: QuoteItem, idx: number) => {
           if (item.type === 'cruise') { const ci = item as CruiseItem; if (ci.ship) fetchShipPhotos(ci.ship, idx) }
           if (item.type === 'car') { const ca = item as CarItem; if (ca.model) fetchCarPhoto(ca.model, idx) }
         })
         setAiMsg(data.message || 'Listo.')
         setAiCmd('')
+        setAiFiles([])
       }
     } catch { setAiMsg('Error de conexión.') }
     finally { setAiBusy(false) }
@@ -1497,10 +1498,36 @@ export default function CotizadorApp() {
               rows={3}
               style={{ width: '100%', border: '1px solid #D8E0E8', borderRadius: 8, padding: '8px 10px', fontSize: 12, color: '#15293F', resize: 'vertical', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
             />
-            <div style={{ marginTop: 12, borderTop: '1px solid #EDF1F5', paddingTop: 12 }}>
+            <div
+              style={{ marginTop: 12, borderTop: '1px solid #EDF1F5', paddingTop: 12 }}
+              onPaste={e => {
+                const images = Array.from(e.clipboardData.items).filter(it => it.kind === 'file' && it.type.startsWith('image/'))
+                const files = images.map(it => it.getAsFile()).filter(Boolean) as File[]
+                if (files.length) { setAiFiles(prev => [...prev, ...files]); setAiMsg('') }
+              }}
+            >
               <div style={{ fontSize: 11, fontWeight: 700, color: '#0F3D7A', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 8 }}>✨ Asistente IA</div>
-              <div style={{ fontSize: 11, color: '#9AA8B8', marginBottom: 8 }}>Escribe lo que quieres cambiar, agregar o quitar de la cotización</div>
+              <div style={{ fontSize: 11, color: '#9AA8B8', marginBottom: 8 }}>Escribe tu instrucción, adjunta una imagen o PDF, o pega con Cmd+V</div>
+
+              {/* Archivos adjuntos */}
+              {aiFiles.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                  {aiFiles.map((f, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#EAF6FB', borderRadius: 6, padding: '4px 8px', fontSize: 11 }}>
+                      <span style={{ color: '#0F3D7A', fontWeight: 600 }}>{f.type.startsWith('image/') ? '🖼' : '📄'} {f.name.length > 20 ? f.name.slice(0, 18) + '…' : f.name}</span>
+                      <button onClick={() => setAiFiles(prev => prev.filter((_, j) => j !== i))} style={{ border: 'none', background: 'none', color: '#9AA8B8', cursor: 'pointer', fontSize: 14, lineHeight: 1, padding: 0 }}>×</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div style={{ display: 'flex', gap: 8 }}>
+                {/* Botón adjuntar */}
+                <label style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, border: '1px solid #D8E0E8', borderRadius: 8, cursor: 'pointer', background: '#fff', fontSize: 16 }} title="Adjuntar imagen o PDF">
+                  📎
+                  <input type="file" multiple accept="image/*,application/pdf,.pdf" style={{ display: 'none' }}
+                    onChange={e => { setAiFiles(prev => [...prev, ...Array.from(e.target.files || [])]); e.target.value = '' }} />
+                </label>
                 <input
                   value={aiCmd}
                   onChange={e => setAiCmd(e.target.value)}
@@ -1511,8 +1538,8 @@ export default function CotizadorApp() {
                 />
                 <button
                   onClick={sendAiEdit}
-                  disabled={aiBusy || !aiCmd.trim()}
-                  style={{ background: aiBusy || !aiCmd.trim() ? '#C8D5E2' : '#0F3D7A', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor: aiBusy || !aiCmd.trim() ? 'default' : 'pointer', whiteSpace: 'nowrap' }}
+                  disabled={aiBusy || (!aiCmd.trim() && aiFiles.length === 0)}
+                  style={{ background: aiBusy || (!aiCmd.trim() && aiFiles.length === 0) ? '#C8D5E2' : '#0F3D7A', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor: aiBusy || (!aiCmd.trim() && aiFiles.length === 0) ? 'default' : 'pointer', whiteSpace: 'nowrap' }}
                 >
                   {aiBusy ? '...' : 'Enviar'}
                 </button>
