@@ -264,6 +264,7 @@ export default function CotizadorApp() {
   const [showClients, setShowClients] = useState(false)
   const [toast, setToast] = useState('')
   const [pdfBusy, setPdfBusy] = useState(false)
+  const [pdfName, setPdfName] = useState('')
   const [confirmDelete, setConfirmDelete] = useState<{ msg: string; onConfirm: () => void } | null>(null)
 
   // Import state
@@ -990,12 +991,8 @@ export default function CotizadorApp() {
     setPdfBusy(true)
     try {
       const blob = await generatePDFBlob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `CE-Viaja-${quote.number}.pdf`
-      a.click()
-      URL.revokeObjectURL(url)
+      const name = (pdfName.trim() || `CE-Viaja-${quote.number}`).replace(/\.pdf$/i, '')
+      triggerDownload(blob, `${name}.pdf`)
     } finally {
       setPdfBusy(false)
     }
@@ -1097,11 +1094,20 @@ export default function CotizadorApp() {
             disabled={pdfBusy}
             style={{ display: 'flex', alignItems: 'center', gap: 7, border: '1px solid #D8E0E8', background: '#fff', color: '#15293F', fontFamily: 'Manrope', fontWeight: 700, fontSize: 13, padding: '9px 14px', borderRadius: 9, cursor: pdfBusy ? 'not-allowed' : 'pointer', opacity: pdfBusy ? .6 : 1 }}
           >Correo</button>
-          <button
-            onClick={downloadPDF}
-            disabled={pdfBusy}
-            style={{ display: 'flex', alignItems: 'center', gap: 7, border: 'none', background: '#0F3D7A', color: '#fff', fontFamily: 'Manrope', fontWeight: 700, fontSize: 13, padding: '10px 16px', borderRadius: 9, cursor: pdfBusy ? 'not-allowed' : 'pointer', opacity: pdfBusy ? .6 : 1 }}
-          >{pdfBusy ? 'Generando PDF…' : 'Descargar PDF'}</button>
+          <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #C8D5E2', borderRadius: 9, overflow: 'hidden' }}>
+            <input
+              value={pdfName}
+              onChange={e => setPdfName(e.target.value)}
+              placeholder={`CE-Viaja-${quote.number}`}
+              style={{ border: 'none', outline: 'none', fontSize: 12, color: '#15293F', padding: '9px 10px', width: 170, fontFamily: 'Manrope', background: '#fff' }}
+            />
+            <span style={{ fontSize: 11, color: '#9AA8B8', paddingRight: 8, background: '#fff' }}>.pdf</span>
+            <button
+              onClick={downloadPDF}
+              disabled={pdfBusy}
+              style={{ border: 'none', background: '#0F3D7A', color: '#fff', fontFamily: 'Manrope', fontWeight: 700, fontSize: 13, padding: '10px 14px', cursor: pdfBusy ? 'not-allowed' : 'pointer', opacity: pdfBusy ? .6 : 1, whiteSpace: 'nowrap' }}
+            >{pdfBusy ? '…' : 'Descargar PDF'}</button>
+          </div>
           <div style={{ width: 1, height: 26, background: '#E6ECF2' }} />
           <button
             onClick={logout}
