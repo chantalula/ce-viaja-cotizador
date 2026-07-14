@@ -1,4 +1,7 @@
+import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
+
+const client = new Anthropic()
 
 async function pexels(query: string, page = 1): Promise<string | null> {
   const key = process.env.PEXELS_API_KEY
@@ -38,25 +41,39 @@ async function hotelMapTile(name: string, location: string): Promise<string | nu
   } catch { return null }
 }
 
+async function fetchStars(name: string, location: string): Promise<number> {
+  try {
+    const msg = await client.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 10,
+      messages: [{
+        role: 'user',
+        content: `Hotel: "${name}" en "${location}". ¿Cuántas estrellas tiene? Responde solo con un número del 1 al 5. Si no lo conoces responde 0.`,
+      }],
+    })
+    const text = msg.content[0]?.type === 'text' ? msg.content[0].text.trim() : '0'
+    const n = parseInt(text.replace(/\D/g, ''), 10)
+    return isNaN(n) || n < 1 || n > 5 ? 0 : n
+  } catch { return 0 }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { name, location } = await request.json() as { name: string; location: string }
-    if (!name?.trim()) return NextResponse.json({ urls: [null, null, null] })
+    if (!name?.trim()) return NextResponse.json({ urls: [null, null, null], stars: 0 })
 
     const city = (location || '').split(',')[0].trim()
 
-    const [room, exterior, map] = await Promise.all([
-      // Slot 1: habitación — busca específicamente interiores
+    const [room, exterior, map, stars] = await Promise.all([
       pexels(`${name} hotel bedroom interior`).then(u => u ?? pexels('luxury hotel room interior suite')),
-      // Slot 2: exterior — busca fachada o piscina del hotel (page 2 para evitar duplicar)
       pexels(`${city} resort hotel pool exterior`).then(u => u ?? pexels('resort hotel exterior facade', 2)),
-      // Slot 3: mapa real del hotel via Nominatim + Carto tiles
       hotelMapTile(name, location).then(u => u ?? pexels(`${city} aerial view map`)),
+      fetchStars(name, location),
     ])
 
-    return NextResponse.json({ urls: [room, exterior, map] })
+    return NextResponse.json({ urls: [room, exterior, map], stars })
   } catch (err) {
     const msg = err instanceof Error ? err.message : ''
-    return NextResponse.json({ urls: [null, null, null], error: msg }, { status: 500 })
+    return NextResponse.json({ urls: [null, null, null], stars: 0, error: msg }, { status: 500 })
   }
 }
