@@ -3,37 +3,33 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const client = new Anthropic()
 
-async function tryFetchOgImage(websiteUrl: string): Promise<string | null> {
+async function searchPexels(query: string): Promise<string | null> {
+  const key = process.env.PEXELS_API_KEY
+  if (!key) return null
   try {
-    const res = await fetch(websiteUrl, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; CEViaja/1.0)' },
-      signal: AbortSignal.timeout(5000),
-    })
+    const res = await fetch(
+      `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=1&orientation=landscape`,
+      { headers: { Authorization: key } }
+    )
     if (!res.ok) return null
-    const html = await res.text()
-    const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
-      || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)
-    if (!ogMatch?.[1]) return null
-    const imgUrl = ogMatch[1]
-    if (imgUrl.startsWith('http')) return imgUrl
-    const base = new URL(websiteUrl)
-    return new URL(imgUrl, base.origin).href
+    const data = await res.json() as { photos?: { src: { large2x: string } }[] }
+    return data.photos?.[0]?.src?.large2x ?? null
   } catch { return null }
 }
 
-async function tryWikimediaCommons(query: string): Promise<string | null> {
+async function searchWikimediaCommons(query: string): Promise<string | null> {
   try {
     const searchRes = await fetch(
-      `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srnamespace=6&srlimit=10&format=json&origin=*`,
-      { signal: AbortSignal.timeout(5000) }
+      `https://commons.wikimedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srnamespace=6&srlimit=8&format=json`,
+      { headers: { 'User-Agent': 'CEViajaCotizador/1.0 (chantalula@gmail.com)' } }
     )
     if (!searchRes.ok) return null
     const data = await searchRes.json()
     const files: { title: string }[] = data.query?.search || []
     for (const file of files) {
       const imgRes = await fetch(
-        `https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(file.title)}&prop=imageinfo&iiprop=url&iiurlwidth=1600&format=json&origin=*`,
-        { signal: AbortSignal.timeout(4000) }
+        `https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(file.title)}&prop=imageinfo&iiprop=url&iiurlwidth=1600&format=json`,
+        { headers: { 'User-Agent': 'CEViajaCotizador/1.0 (chantalula@gmail.com)' } }
       )
       if (!imgRes.ok) continue
       const imgData = await imgRes.json()
@@ -47,83 +43,43 @@ async function tryWikimediaCommons(query: string): Promise<string | null> {
   } catch { return null }
 }
 
-async function tryUnsplashFallback(query: string): Promise<string | null> {
-  try {
-    const encoded = encodeURIComponent(query)
-    const res = await fetch(`https://source.unsplash.com/featured/1400x900/?${encoded}`, {
-      redirect: 'follow',
-      signal: AbortSignal.timeout(6000),
-    })
-    if (res.ok && res.url && res.url.includes('images.unsplash.com')) return res.url
-    return null
-  } catch { return null }
-}
-
 export async function POST(request: NextRequest) {
   try {
     const { name, location } = await request.json() as { name: string; location: string }
     if (!name?.trim()) return NextResponse.json({ url: null })
 
-    // Step 1: Ask Claude for hotel info — website URL and any known image URL
-    const claudeMsg = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 300,
-      messages: [{
-        role: 'user',
-        content: `Hotel: "${name}" en ${location || 'destino desconocido'}.
-Dame la siguiente info en JSON válido sin markdown:
-{
-  "website": "<URL oficial del hotel o cadena hotelera, ej: https://www.marriott.com/hotels/travel/...>",
-  "imageUrl": "<URL directa de una imagen pública del hotel si la conoces, o null>",
-  "searchTerms": "<términos de búsqueda en inglés para encontrar fotos de este hotel en Wikimedia Commons>"
-}
-Solo JSON, nada más.`,
-      }],
-    })
-
-    const raw = claudeMsg.content[0]?.type === 'text' ? claudeMsg.content[0].text.trim() : ''
-    let hotelInfo: { website?: string; imageUrl?: string; searchTerms?: string } = {}
+    // Step 1: Ask Claude for optimized search terms
+    let searchTerms = `${name} hotel ${location}`
     try {
-      const a = raw.indexOf('{'); const b = raw.lastIndexOf('}')
-      if (a >= 0 && b > a) hotelInfo = JSON.parse(raw.slice(a, b + 1))
-    } catch { /* ignore */ }
+      const claudeMsg = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 100,
+        messages: [{
+          role: 'user',
+          content: `Hotel: "${name}" en "${location || 'destino'}". Dame los mejores términos de búsqueda en inglés para encontrar fotos bonitas de este hotel específico en Pexels o Wikimedia Commons. Solo devuelve los términos, sin explicaciones. Ejemplo: "Marriott Cancun beachfront resort exterior"`,
+        }],
+      })
+      const terms = claudeMsg.content[0]?.type === 'text' ? claudeMsg.content[0].text.trim() : ''
+      if (terms) searchTerms = terms
+    } catch { /* use default */ }
 
-    // Step 2: Try direct image URL from Claude
-    if (hotelInfo.imageUrl) {
-      try {
-        const check = await fetch(hotelInfo.imageUrl, { method: 'HEAD', signal: AbortSignal.timeout(4000) })
-        if (check.ok && check.headers.get('content-type')?.startsWith('image/')) {
-          return NextResponse.json({ url: hotelInfo.imageUrl })
-        }
-      } catch { /* continue */ }
-    }
+    // Step 2: Pexels with Claude's terms (primary — needs PEXELS_API_KEY in env)
+    const pexels1 = await searchPexels(searchTerms)
+    if (pexels1) return NextResponse.json({ url: pexels1 })
 
-    // Step 3: Try og:image from hotel's official website
-    if (hotelInfo.website) {
-      const ogUrl = await tryFetchOgImage(hotelInfo.website)
-      if (ogUrl) return NextResponse.json({ url: ogUrl })
-    }
+    // Step 3: Pexels with generic hotel + location fallback
+    const pexels2 = await searchPexels(`hotel ${location} luxury resort`)
+    if (pexels2) return NextResponse.json({ url: pexels2 })
 
-    // Step 4: Wikimedia Commons with Claude's search terms
-    const wikiQuery = hotelInfo.searchTerms || `${name} ${location} hotel`
-    const wikimediaUrl = await tryWikimediaCommons(wikiQuery)
-    if (wikimediaUrl) return NextResponse.json({ url: wikimediaUrl })
+    // Step 4: Wikimedia Commons
+    const wiki = await searchWikimediaCommons(searchTerms)
+    if (wiki) return NextResponse.json({ url: wiki })
 
-    // Step 5: Also try with the original name+location
-    if (hotelInfo.searchTerms) {
-      const wikimediaUrl2 = await tryWikimediaCommons(`${name} ${location} hotel exterior`)
-      if (wikimediaUrl2) return NextResponse.json({ url: wikimediaUrl2 })
-    }
+    // Step 5: Wikimedia Commons generic
+    const wiki2 = await searchWikimediaCommons(`${name} hotel exterior`)
+    if (wiki2) return NextResponse.json({ url: wiki2 })
 
-    // Step 6: Unsplash visual fallback (no API key needed)
-    const unsplashQuery = `hotel ${name} ${location}`
-    const unsplashUrl = await tryUnsplashFallback(unsplashQuery)
-    if (unsplashUrl) return NextResponse.json({ url: unsplashUrl })
-
-    // Step 7: Generic hotel destination photo from Unsplash
-    const genericUrl = await tryUnsplashFallback(`luxury hotel ${location || 'travel'}`)
-    return NextResponse.json({ url: genericUrl })
-
+    return NextResponse.json({ url: null })
   } catch (err) {
     const msg = err instanceof Error ? err.message : ''
     return NextResponse.json({ url: null, error: msg }, { status: 500 })
