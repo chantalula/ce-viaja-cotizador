@@ -30,6 +30,7 @@ const SELLERS = [
   { name: 'Xenia de De Bello', phone: '+507 6202-4708', email: 'Xenia@ceviaja.com', initials: 'XB' },
   { name: 'Nanci Torres', phone: '+507 6151-5900', email: 'Nanci@ceviaja.com', initials: 'NT' },
   { name: 'Alejandra Delgado', phone: '+507 6140-8514', email: 'Adelgado@ceviaja.com', initials: 'AD' },
+  { name: 'Joseph Perez', phone: '+507 6151-5500', email: 'Joseph@ceviaja.com', initials: 'JP' },
 ]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
