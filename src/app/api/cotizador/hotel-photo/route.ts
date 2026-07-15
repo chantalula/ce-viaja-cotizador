@@ -63,10 +63,11 @@ export async function POST(request: NextRequest) {
     if (!name?.trim()) return NextResponse.json({ urls: [null, null, null], stars: 0 })
 
     const city = (location || '').split(',')[0].trim()
+    const year = new Date().getFullYear()
 
     const [room, exterior, map, stars] = await Promise.all([
-      pexels(`${name} hotel bedroom interior`).then(u => u ?? pexels('luxury hotel room interior suite')),
-      pexels(`${city} resort hotel pool exterior`).then(u => u ?? pexels('resort hotel exterior facade', 2)),
+      pexels(`${name} hotel ${year} bedroom interior`).then(u => u ?? pexels(`${name} hotel room interior`)).then(u => u ?? pexels('luxury hotel room interior suite')),
+      pexels(`${name} ${year} hotel exterior`).then(u => u ?? pexels(`${city} ${year} resort hotel pool`)).then(u => u ?? pexels('resort hotel exterior facade', 2)),
       hotelMapTile(name, location).then(u => u ?? pexels(`${city} aerial view map`)),
       fetchStars(name, location),
     ])

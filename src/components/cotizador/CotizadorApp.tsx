@@ -597,6 +597,16 @@ export default function CotizadorApp() {
         .map((it: Record<string, unknown>) => normalizeItem(it))
         .filter(Boolean) as QuoteItem[]
 
+      // Rescue: AI sometimes routes car total price to priceAdulto instead of item.price
+      const hasFlightOrCruise = newItems.some(it => it.type === 'flight' || it.type === 'cruise')
+      if (!hasFlightOrCruise && parsePrice(data.priceAdulto) > 0) {
+        const carIdx = newItems.findIndex(it => it.type === 'car')
+        if (carIdx >= 0 && (newItems[carIdx] as CarItem).price === 0) {
+          ;(newItems[carIdx] as CarItem).price = parsePrice(data.priceAdulto)
+          data.priceAdulto = 0
+        }
+      }
+
       setQuote(q => {
         const updated = JSON.parse(JSON.stringify(q)) as QuoteDoc
         if (data.client) updated.client = data.client
@@ -621,7 +631,7 @@ export default function CotizadorApp() {
           }
           if (item.type === 'cruise') {
             const ci = item as CruiseItem
-            if (ci.ship) fetchShipPhotos(ci.ship, idx)
+            if (ci.ship) fetchShipPhotos(ci.ship, idx, ci.line)
             const firstPort = ci.ports?.find(p => p.port?.trim())
             if (firstPort) fetchPortPhoto(firstPort.port, idx)
           }
@@ -766,7 +776,7 @@ export default function CotizadorApp() {
       if (data.quote) {
         setQuote(data.quote)
         data.quote.items?.forEach((item: QuoteItem, idx: number) => {
-          if (item.type === 'cruise') { const ci = item as CruiseItem; if (ci.ship) fetchShipPhotos(ci.ship, idx) }
+          if (item.type === 'cruise') { const ci = item as CruiseItem; if (ci.ship) fetchShipPhotos(ci.ship, idx, ci.line) }
           if (item.type === 'car') { const ca = item as CarItem; if (ca.model) fetchCarPhoto(ca.model, idx) }
         })
         setAiMsg(data.message || 'Listo.')
@@ -777,47 +787,17 @@ export default function CotizadorApp() {
     finally { setAiBusy(false) }
   }
 
-  async function fetchShipPhotos(shipName: string, idx: number) {
+  async function fetchShipPhotos(shipName: string, idx: number, line = '') {
     if (!shipName.trim()) return
     try {
-      // 1st try: exact Wikipedia article title
-      const slug = shipName.trim().replace(/\s+/g, '_')
-      const extRes = await fetch(
-        `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(slug)}&prop=pageimages&format=json&pithumbsize=2000&origin=*`
-      )
-      if (extRes.ok) {
-        const extData = await extRes.json()
-        const pages = extData.query?.pages
-        if (pages) {
-          const page = Object.values(pages)[0] as { thumbnail?: { source: string }; missing?: string }
-          if (page?.thumbnail?.source) {
-            setShipAutoPhoto(p => ({ ...p, [`${idx}-ext`]: page.thumbnail!.source }))
-            return
-          }
-        }
-      }
-
-      // 2nd try: Wikipedia search (same approach as car photos)
-      const searchRes = await fetch(
-        `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(shipName + ' cruise ship')}&srlimit=3&format=json&origin=*`
-      )
-      if (!searchRes.ok) return
-      const searchData = await searchRes.json()
-      const results: { title: string }[] = searchData.query?.search || []
-      for (const result of results) {
-        const pageRes = await fetch(
-          `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(result.title)}&prop=pageimages&format=json&pithumbsize=2000&origin=*`
-        )
-        if (!pageRes.ok) continue
-        const pageData = await pageRes.json()
-        const pages = pageData.query?.pages
-        if (!pages) continue
-        const page = Object.values(pages)[0] as { thumbnail?: { source: string } }
-        if (page?.thumbnail?.source) {
-          setShipAutoPhoto(p => ({ ...p, [`${idx}-ext`]: page.thumbnail!.source }))
-          return
-        }
-      }
+      const res = await fetch('/api/cotizador/cruise-photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ship: shipName, line }),
+      })
+      if (!res.ok) return
+      const data = await res.json() as { url?: string }
+      if (data.url) setShipAutoPhoto(p => ({ ...p, [`${idx}-ext`]: data.url! }))
     } catch { /* ignore */ }
   }
 

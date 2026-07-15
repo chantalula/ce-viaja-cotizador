@@ -31,7 +31,7 @@ Reglas:
   "pickupDate"/"returnDate"= fechas en español corto
   "days"= número de días de renta
   "protection"= tipo de protección incluida (CDW, LDW, LIS, PAI, etc.)
-  "price"= el precio TOTAL del alquiler. Mira: "Estimated Total", "Total Charges", "Amount Due", "Grand Total", "Total Estimated", "Precio Total", "Total a Pagar". Si ves solo tarifa por día ("Daily Rate", "Rate/Day"), multiplícala por los días y suma protecciones. El precio va SIEMPRE en el campo "price" del item, NUNCA en priceAdulto.
+  "price"= el precio TOTAL del alquiler. Mira: "Estimated Total", "Total Charges", "Amount Due", "Grand Total", "Total Estimated", "Precio Total", "Total a Pagar". Si ves solo tarifa por día ("Daily Rate", "Rate/Day"), multiplícala por los días y suma protecciones. El precio va SIEMPRE en el campo "price" del item, NUNCA en priceAdulto. EJEMPLO CORRECTO: {"priceAdulto":0,"items":[{"type":"car","price":523.45,...}]}. EJEMPLO INCORRECTO (NUNCA hagas esto): {"priceAdulto":523.45,"items":[{"type":"car","price":0,...}]}.
 - Fechas en español corto: "Jue 21 may 2026". Deja "" o 0 lo que no aparezca.
 - "duration": déjalo SIEMPRE como "" (cadena vacía). El sistema calcula la duración correcta con cambio de horario automáticamente. EXCEPCIÓN: si la duración aparece explícita en el documento (ej: "9h 45m", "Flight time 10:20"), úsala tal cual en formato "Xh Ym".`
 

@@ -14,10 +14,24 @@ async function pexels(query: string): Promise<string | null> {
   } catch { return null }
 }
 
-async function wikipedia(model: string): Promise<string | null> {
+async function wikipedia(searchTerm: string): Promise<string | null> {
   try {
+    const slug = searchTerm.trim().replace(/\s+/g, '_')
+    const directRes = await fetch(
+      `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(slug)}&prop=pageimages&format=json&pithumbsize=2000`,
+      { headers: { 'User-Agent': 'CEViajaCotizador/1.0 (chantalula@gmail.com)' } }
+    )
+    if (directRes.ok) {
+      const d = await directRes.json()
+      const pages = d.query?.pages
+      if (pages) {
+        const page = Object.values(pages)[0] as { thumbnail?: { source: string }; missing?: string }
+        if (!page.missing && page?.thumbnail?.source) return page.thumbnail.source
+      }
+    }
+
     const searchRes = await fetch(
-      `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(model)}&srlimit=3&format=json`,
+      `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(searchTerm + ' cruise ship')}&srlimit=3&format=json`,
       { headers: { 'User-Agent': 'CEViajaCotizador/1.0 (chantalula@gmail.com)' } }
     )
     if (!searchRes.ok) return null
@@ -25,7 +39,7 @@ async function wikipedia(model: string): Promise<string | null> {
     const results: { title: string }[] = searchData.query?.search || []
     for (const result of results) {
       const pageRes = await fetch(
-        `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(result.title)}&prop=pageimages&format=json&pithumbsize=1200`,
+        `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(result.title)}&prop=pageimages&format=json&pithumbsize=2000`,
         { headers: { 'User-Agent': 'CEViajaCotizador/1.0 (chantalula@gmail.com)' } }
       )
       if (!pageRes.ok) continue
@@ -41,22 +55,19 @@ async function wikipedia(model: string): Promise<string | null> {
 
 export async function POST(request: NextRequest) {
   try {
-    const { model, category } = await request.json() as { model: string; category: string }
-    const query = model?.trim() || category?.trim()
-    if (!query) return NextResponse.json({ url: null })
+    const { ship, line } = await request.json() as { ship: string; line: string }
+    if (!ship?.trim()) return NextResponse.json({ url: null })
 
-    // Strip "o similar" / "or similar" suffix common in rental docs
-    const cleanModel = query.replace(/\s*(o similar|or similar)\s*/i, '').trim()
     const year = new Date().getFullYear()
+    const shipClean = ship.trim()
+    const lineClean = (line || '').trim()
 
+    // Ship exterior: Wikipedia first (most accurate), then Pexels with year
     const url =
-      await pexels(`${cleanModel} ${year} isolated white background`)
-      ?? await pexels(`${cleanModel} ${year} car product photo white`)
-      ?? await pexels(`${cleanModel} isolated white background`)
-      ?? await pexels(`${cleanModel} car studio white`)
-      ?? await wikipedia(cleanModel)
-      ?? await pexels(`${category} ${year} car isolated white background`)
-      ?? await pexels('car isolated white background')
+      await wikipedia(shipClean)
+      ?? await pexels(`${shipClean} cruise ship ${year}`)
+      ?? await pexels(`${lineClean} ${shipClean} cruise ship`)
+      ?? await pexels(`cruise ship ${year} ocean`)
 
     return NextResponse.json({ url })
   } catch (err) {
