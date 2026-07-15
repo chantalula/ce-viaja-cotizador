@@ -655,7 +655,13 @@ export default function CotizadorApp() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ image: base64, mimeType: imageFile.type }),
               })
-              const bbox = await bboxRes.json() as { x: number; y: number; w: number; h: number }
+              const bbox = await bboxRes.json() as { found: boolean; x: number; y: number; w: number; h: number }
+              if (!bbox.found) {
+                // No car image in document → search Pexels by model
+                const ca = newItems[carIdx] as CarItem
+                if (ca.model) fetchCarPhoto(ca.model, carIdx)
+                return
+              }
               const img = new window.Image()
               img.onload = () => {
                 const canvas = document.createElement('canvas')
@@ -673,8 +679,9 @@ export default function CotizadorApp() {
               }
               img.src = dataUrl
             } catch {
-              // Fallback: full image
-              setCarPhotos(p => ({ ...p, [`car${carIdx}-photo`]: dataUrl }))
+              // On any error, fall back to Pexels
+              const ca = newItems[carIdx] as CarItem
+              if (ca.model) fetchCarPhoto(ca.model, carIdx)
             }
           }
           reader.readAsDataURL(imageFile)
