@@ -635,13 +635,26 @@ export default function CotizadorApp() {
             const firstPort = ci.ports?.find(p => p.port?.trim())
             if (firstPort) fetchPortPhoto(firstPort.port, idx)
           }
-          if (item.type === 'car') {
-            const ca = item as CarItem
-            if (ca.model) fetchCarPhoto(ca.model, idx)
-          }
         })
         return updated
       })
+
+      // Car photo: use the imported image itself, else fall back to Pexels
+      const carIdx = newItems.findIndex(it => it.type === 'car')
+      if (carIdx >= 0) {
+        const imageFile = importFiles.find(f => f.type.startsWith('image/'))
+        if (imageFile) {
+          const reader = new FileReader()
+          reader.onload = (e) => {
+            const dataUrl = e.target?.result as string
+            if (dataUrl) setCarPhotos(p => ({ ...p, [`car${carIdx}-photo`]: dataUrl }))
+          }
+          reader.readAsDataURL(imageFile)
+        } else {
+          const ca = newItems[carIdx] as CarItem
+          if (ca.model) fetchCarPhoto(ca.model, carIdx)
+        }
+      }
 
       setImportBusy(false)
       setShowImport(false)
