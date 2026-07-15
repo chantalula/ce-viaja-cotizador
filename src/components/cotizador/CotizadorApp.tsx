@@ -1339,7 +1339,7 @@ export default function CotizadorApp() {
           <div style={{ background: '#fff', border: '1px solid #EAEFF4', borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: '#0F3D7A', marginBottom: 12 }}>Productos</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 14 }}>
-              {['flight', 'hotel', 'cruise', 'tour', 'transfer', 'car', 'insurance'].map(t => (
+              {['flight', 'hotel', 'cruise', 'tour', 'transfer', 'car'].map(t => (
                 <button key={t} onClick={() => onAction('add', 0, undefined, t)} style={{ border: '1px solid #BFE6F2', background: '#EAF6FB', color: '#0F3D7A', fontWeight: 700, fontSize: 12, padding: '7px 11px', borderRadius: 8, cursor: 'pointer' }}>
                   + {ITEM_LABELS[t]}
                 </button>
