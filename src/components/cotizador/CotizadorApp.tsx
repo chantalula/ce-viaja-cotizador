@@ -638,7 +638,13 @@ export default function CotizadorApp() {
       setImportMsg('')
       setImportFiles([])
       importFile.current = null
-      showToast('Datos rellenados por la IA — revísalos')
+      const carItem = newItems.find(i => i.type === 'car') as import('./../../lib/cotizador/types').CarItem | undefined
+      if (carItem) {
+        const parts = [carItem.company, carItem.model, carItem.price ? `$${carItem.price}` : ''].filter(Boolean)
+        showToast(parts.length ? `Carro leído: ${parts.join(' · ')}` : 'Carro leído — revisa los campos')
+      } else {
+        showToast('Datos rellenados por la IA — revísalos')
+      }
 
       const cName = data.client || '', cPhone = data.clientPhone || ''
       const cEmail = data.clientEmail || '', cPass = data.clientPassport || ''
@@ -2146,7 +2152,7 @@ export default function CotizadorApp() {
             <div style={{ padding: '22px 24px' }}>
               <div style={{ fontSize: 13, color: '#5B7186', lineHeight: 1.6, marginBottom: 6 }}>Sube <b>fotos, PDFs o documentos</b> (varios a la vez) o <b>pega el texto</b> y la IA rellena la cotización sola. Reconoce:</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
-                {['Itinerario Sabre', 'Pasaporte', 'Hotel', 'Crucero', 'Tour / Traslado', 'Precios y tarifas'].map(t => (
+                {['Itinerario Sabre', 'Pasaporte', 'Hotel', 'Crucero', 'Tour / Traslado', 'Carro', 'Seguro', 'Precios y tarifas'].map(t => (
                   <span key={t} style={{ fontSize: 11, color: '#0F3D7A', background: '#EAF6FB', padding: '3px 9px', borderRadius: 20, fontWeight: 600 }}>{t}</span>
                 ))}
                 {['JPG/PNG', 'PDF', 'TXT'].map(t => (
