@@ -134,21 +134,30 @@ function money2(n: number, currency: string) {
   return sym + (Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
+function parsePrice(v: unknown): number {
+  if (typeof v === 'number') return v
+  if (typeof v === 'string') {
+    const n = Number(v.replace(/[^0-9.]/g, ''))
+    return isNaN(n) ? 0 : n
+  }
+  return 0
+}
+
 function normalizeItem(it: Record<string, unknown>): QuoteItem | null {
   if (!it || !it.type) return null
   if (it.type === 'flight') {
     return {
       type: 'flight', dir: (it.dir as string) || 'Ida', date: (it.date as string) || '',
-      price: Number(it.price) || 0, baggage: (it.baggage as string) || '',
+      price: parsePrice(it.price), baggage: (it.baggage as string) || '',
       segments: ((it.segments as unknown[]) || []).map((sg) => Object.assign(newSeg(), sg as object)),
     }
   }
-  if (it.type === 'hotel') return { type: 'hotel', name: (it.name as string) || 'Hotel', stars: Number(it.stars) || 0, location: (it.location as string) || '', address: (it.address as string) || '', checkIn: (it.checkIn as string) || '', checkOut: (it.checkOut as string) || '', nights: (it.nights as string) || '', roomType: (it.roomType as string) || '', board: (it.board as string) || '', cancellation: (it.cancellation as string) || '', price: Number(it.price) || 0 }
-  if (it.type === 'cruise') return { type: 'cruise', line: (it.line as string) || '', ship: (it.ship as string) || '', route: (it.route as string) || '', depart: (it.depart as string) || '', nights: (it.nights as string) || '', cabin: (it.cabin as string) || '', cabinLabel: (it.cabinLabel as string) || '', boardingTime: (it.boardingTime as string) || '', ports: ((it.ports as unknown[]) || []).map((p) => ({ date: (p as Record<string,string>).date || '', port: (p as Record<string,string>).port || '', arr: (p as Record<string,string>).arr || '', dep: (p as Record<string,string>).dep || '' })), promotion: (it.promotion as string) || '', price: Number(it.price) || 0 }
-  if (it.type === 'tour') return { type: 'tour', name: (it.name as string) || 'Tour', location: (it.location as string) || '', date: (it.date as string) || '', duration: (it.duration as string) || '', includes: (it.includes as string) || '', price: Number(it.price) || 0 }
-  if (it.type === 'transfer') return { type: 'transfer', from: (it.from as string) || '', to: (it.to as string) || '', date: (it.date as string) || '', vehicle: (it.vehicle as string) || '', mode: (it.mode as string) || 'Privado', price: Number(it.price) || 0 }
-  if (it.type === 'car') return { type: 'car', company: (it.company as string) || '', category: (it.category as string) || '', model: (it.model as string) || '', pickupLocation: (it.pickupLocation as string) || '', dropoffLocation: (it.dropoffLocation as string) || '', pickupDate: (it.pickupDate as string) || '', returnDate: (it.returnDate as string) || '', days: (it.days as string) || '', passengers: (it.passengers as string) || '5', bags: (it.bags as string) || '2', doors: (it.doors as string) || '4', ac: (it.ac as string) || 'Sí', transmission: (it.transmission as string) || 'Automático', protection: (it.protection as string) || '', promotion: (it.promotion as string) || '', price: Number(it.price) || 0 }
-  if (it.type === 'insurance') return { type: 'insurance', company: (it.company as string) || '', plan: (it.plan as string) || '', destination: (it.destination as string) || '', startDate: (it.startDate as string) || '', endDate: (it.endDate as string) || '', days: (it.days as string) || '', coverage: (it.coverage as string) || '', price: Number(it.price) || 0 }
+  if (it.type === 'hotel') return { type: 'hotel', name: (it.name as string) || 'Hotel', stars: Number(it.stars) || 0, location: (it.location as string) || '', address: (it.address as string) || '', checkIn: (it.checkIn as string) || '', checkOut: (it.checkOut as string) || '', nights: (it.nights as string) || '', roomType: (it.roomType as string) || '', board: (it.board as string) || '', cancellation: (it.cancellation as string) || '', price: parsePrice(it.price) }
+  if (it.type === 'cruise') return { type: 'cruise', line: (it.line as string) || '', ship: (it.ship as string) || '', route: (it.route as string) || '', depart: (it.depart as string) || '', nights: (it.nights as string) || '', cabin: (it.cabin as string) || '', cabinLabel: (it.cabinLabel as string) || '', boardingTime: (it.boardingTime as string) || '', ports: ((it.ports as unknown[]) || []).map((p) => ({ date: (p as Record<string,string>).date || '', port: (p as Record<string,string>).port || '', arr: (p as Record<string,string>).arr || '', dep: (p as Record<string,string>).dep || '' })), promotion: (it.promotion as string) || '', price: parsePrice(it.price) }
+  if (it.type === 'tour') return { type: 'tour', name: (it.name as string) || 'Tour', location: (it.location as string) || '', date: (it.date as string) || '', duration: (it.duration as string) || '', includes: (it.includes as string) || '', price: parsePrice(it.price) }
+  if (it.type === 'transfer') return { type: 'transfer', from: (it.from as string) || '', to: (it.to as string) || '', date: (it.date as string) || '', vehicle: (it.vehicle as string) || '', mode: (it.mode as string) || 'Privado', price: parsePrice(it.price) }
+  if (it.type === 'car') return { type: 'car', company: (it.company as string) || '', category: (it.category as string) || '', model: (it.model as string) || '', pickupLocation: (it.pickupLocation as string) || '', dropoffLocation: (it.dropoffLocation as string) || '', pickupDate: (it.pickupDate as string) || '', returnDate: (it.returnDate as string) || '', days: (it.days as string) || '', passengers: (it.passengers as string) || '5', bags: (it.bags as string) || '2', doors: (it.doors as string) || '4', ac: (it.ac as string) || 'Sí', transmission: (it.transmission as string) || 'Automático', protection: (it.protection as string) || '', promotion: (it.promotion as string) || '', price: parsePrice(it.price) }
+  if (it.type === 'insurance') return { type: 'insurance', company: (it.company as string) || '', plan: (it.plan as string) || '', destination: (it.destination as string) || '', startDate: (it.startDate as string) || '', endDate: (it.endDate as string) || '', days: (it.days as string) || '', coverage: (it.coverage as string) || '', price: parsePrice(it.price) }
   return null
 }
 
@@ -192,7 +201,7 @@ function buildSummary(q: QuoteDoc) {
     L.push('  Precio: ' + money(it.price, q.currency) + ' ' + q.currency)
     L.push('')
   })
-  const sub = q.items.reduce((a, it) => a + (Number(it.price) || 0), 0)
+  const sub = q.items.reduce((a, it) => a + (parsePrice(it.price)), 0)
   L.push('Subtotal: ' + money(sub, q.currency) + ' ' + q.currency)
   L.push('TOTAL: ' + money(sub + (Number(q.taxes) || 0), q.currency) + ' ' + q.currency)
   L.push('')
@@ -598,10 +607,10 @@ export default function CotizadorApp() {
             name: p.name || '', type: p.type || 'Adulto', cabin: p.cabin || 'Económica',
           }))
         }
-        if (Number(data.taxes)) updated.taxes = Number(data.taxes)
-        if (Number(data.priceAdulto)) updated.priceAdulto = Number(data.priceAdulto)
-        if (Number(data.priceNino)) updated.priceNino = Number(data.priceNino)
-        if (Number(data.priceJubilado)) updated.priceJubilado = Number(data.priceJubilado)
+        if (parsePrice(data.taxes)) updated.taxes = parsePrice(data.taxes)
+        if (parsePrice(data.priceAdulto)) updated.priceAdulto = parsePrice(data.priceAdulto)
+        if (parsePrice(data.priceNino)) updated.priceNino = parsePrice(data.priceNino)
+        if (parsePrice(data.priceJubilado)) updated.priceJubilado = parsePrice(data.priceJubilado)
         if (newItems.length) updated.items = newItems
         updated.items.forEach((item, idx) => {
           if (item.type === 'flight') applyFlightCalcs(item as FlightItem)
