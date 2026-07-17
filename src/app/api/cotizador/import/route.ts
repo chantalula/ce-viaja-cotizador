@@ -96,14 +96,32 @@ export async function POST(request: NextRequest) {
 
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 4096,
+      max_tokens: 8192,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content }],
     })
 
-    const raw = message.content[0]?.type === 'text' ? message.content[0].text.trim() : ''
-    const a = raw.indexOf('{')
-    const b = raw.lastIndexOf('}')
+    let raw = message.content[0]?.type === 'text' ? message.content[0].text.trim() : ''
+    let a = raw.indexOf('{')
+    let b = raw.lastIndexOf('}')
+
+    // Retry once if response has no valid JSON
+    if (a < 0 || b < 0) {
+      const retry = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 8192,
+        system: SYSTEM_PROMPT,
+        messages: [
+          { role: 'user', content },
+          { role: 'assistant', content: raw || '(respuesta vacía)' },
+          { role: 'user', content: [{ type: 'text', text: 'Tu respuesta no contiene JSON válido. Devuelve ÚNICAMENTE el objeto JSON, empezando con { y terminando con }, sin explicaciones ni markdown.' }] },
+        ],
+      })
+      raw = retry.content[0]?.type === 'text' ? retry.content[0].text.trim() : ''
+      a = raw.indexOf('{')
+      b = raw.lastIndexOf('}')
+    }
+
     if (a < 0 || b < 0) {
       return NextResponse.json(
         { error: 'La IA no devolvió datos legibles. Prueba pegando el texto.' },

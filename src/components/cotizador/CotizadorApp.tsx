@@ -563,6 +563,31 @@ export default function CotizadorApp() {
 
   // ── AI Import ────────────────────────────────────────────────────────────────
 
+  async function compressImage(file: File, maxPx = 1920): Promise<File> {
+    if (!file.type.startsWith('image/')) return file
+    return new Promise(resolve => {
+      const img = new window.Image()
+      const url = URL.createObjectURL(file)
+      img.onload = () => {
+        URL.revokeObjectURL(url)
+        if (img.naturalWidth <= maxPx && img.naturalHeight <= maxPx) { resolve(file); return }
+        const scale = maxPx / Math.max(img.naturalWidth, img.naturalHeight)
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.floor(img.naturalWidth * scale)
+        canvas.height = Math.floor(img.naturalHeight * scale)
+        const ctx = canvas.getContext('2d')
+        if (!ctx) { resolve(file); return }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        canvas.toBlob(blob => {
+          if (!blob) { resolve(file); return }
+          resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }))
+        }, 'image/jpeg', 0.88)
+      }
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(file) }
+      img.src = url
+    })
+  }
+
   async function processImport() {
     try {
       setImportBusy(true)
@@ -571,8 +596,14 @@ export default function CotizadorApp() {
 
       const fd = new FormData()
       if (importFiles.length > 0) {
-        setImportMsg(`Leyendo ${importFiles.length > 1 ? importFiles.length + ' archivos' : importFiles[0].name} con IA…`)
-        importFiles.forEach(f => fd.append('files', f))
+        const hasImages = importFiles.some(f => f.type.startsWith('image/'))
+        if (hasImages) setImportMsg('Optimizando imágenes…')
+        const ready = await Promise.all(importFiles.map(f => compressImage(f)))
+        const label = ready.length > 1
+          ? `${ready.length} archivos`
+          : ready[0].name.length > 30 ? ready[0].name.slice(0, 28) + '…' : ready[0].name
+        setImportMsg(`Analizando ${label} con IA…`)
+        ready.forEach(f => fd.append('files', f))
       } else if (importText.trim()) {
         fd.append('text', importText)
       } else {
