@@ -23,7 +23,7 @@ HOTEL: {"type":"hotel","name":"","stars":0,"location":"","address":"","checkIn":
 CRUCERO: {"type":"cruise","line":"","ship":"","route":"","depart":"","nights":"","cabin":"","cabinLabel":"","boardingTime":"","ports":[],"promotion":"","price":0}
 TOUR: {"type":"tour","name":"","location":"","date":"","duration":"","includes":"","price":0}
 TRASLADO: {"type":"transfer","from":"","to":"","date":"","vehicle":"","mode":"Privado","price":0}
-CARRO: {"type":"car","company":"","category":"","model":"","pickupLocation":"","pickupDate":"","pickupTime":"","dropoffLocation":"","returnDate":"","returnTime":"","days":"","passengers":"5","bags":"2","doors":"4","ac":"Sí","transmission":"Automático","protection":"","promotion":"","price":0}
+CARRO: {"type":"car","company":"","category":"","model":"","pickupLocation":"","pickupCode":"","pickupDate":"","pickupTime":"","dropoffLocation":"","returnCode":"","returnDate":"","returnTime":"","days":"","passengers":"5","bags":"2","doors":"4","ac":"Sí","transmission":"Automático","protection":"","promotion":"","price":0}
 
 Reglas:
 - Si hay imágenes o PDFs adjuntos, analízalos y extrae información relevante para aplicar a la cotización según la instrucción.

@@ -11,7 +11,7 @@ HOTEL: {"type":"hotel","name":"","stars":0,"location":"","address":"","checkIn":
 CRUCERO: {"type":"cruise","line":"","ship":"","route":"","depart":"","nights":"","cabin":"","cabinLabel":"","boardingTime":"","ports":[{"date":"","port":"","arr":"","dep":""}],"promotion":"","price":0}
 TOUR: {"type":"tour","name":"","location":"","date":"","duration":"","includes":"","price":0}
 TRASLADO: {"type":"transfer","from":"","to":"","date":"","vehicle":"","mode":"Privado","price":0}
-CARRO: {"type":"car","company":"","category":"","model":"","pickupLocation":"","pickupDate":"","pickupTime":"","dropoffLocation":"","returnDate":"","returnTime":"","days":"","passengers":"5","bags":"2","doors":"4","ac":"Sí","transmission":"Automático","protection":"","promotion":"","price":0}
+CARRO: {"type":"car","company":"","category":"","model":"","pickupLocation":"","pickupCode":"","pickupDate":"","pickupTime":"","dropoffLocation":"","returnCode":"","returnDate":"","returnTime":"","days":"","passengers":"5","bags":"2","doors":"4","ac":"Sí","transmission":"Automático","protection":"","promotion":"","price":0}
 Reglas:
 - PASAPORTE: llena "client", "clientPassport" y agrega a "pax". No inventes vuelos.
 - "client": nombre del titular o grupo. NUNCA el código de reservación.
@@ -28,7 +28,8 @@ Reglas:
   "company"= mira el encabezado, logo, pie de página, URL o dominio del email: Alamo, Dollar, Hertz, Budget, Avis, Enterprise, National, Thrifty, Sixt, Fox, Payless, ACE, Europcar.
   "category"= clase del vehículo (Economy, Compact, Intermediate, Full Size, SUV, Minivan, etc.)
   "model"= modelo específico como "Hyundai Elantra o similar", "Chevrolet Equinox o similar"
-  "pickupLocation"/"dropoffLocation"= aeropuerto o dirección de recogida/devolución
+  "pickupLocation"/"dropoffLocation"= nombre del aeropuerto o dirección de recogida/devolución
+  "pickupCode"/"returnCode"= código IATA de 3 letras del aeropuerto si la recogida/devolución es en un aeropuerto (ej: "LAS", "MIA", "JFK", "PTY"). Deja "" si no es aeropuerto.
   "pickupDate"/"returnDate"= fechas en español corto (ej: "Lun 21 jul 2026")
   "pickupTime"/"returnTime"= hora de recogida y hora de devolución en formato 24h (ej: "10:00", "14:30"). Busca campos como "Pick-up Time", "Return Time", "Hora de recogida", "Hora de devolución", horarios junto a la fecha.
   "days"= número de días de renta

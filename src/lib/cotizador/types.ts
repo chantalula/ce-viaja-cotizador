@@ -95,9 +95,11 @@ export interface CarItem {
   category: string
   model: string
   pickupLocation: string
+  pickupCode: string
   pickupDate: string
   pickupTime: string
   dropoffLocation: string
+  returnCode: string
   returnDate: string
   returnTime: string
   days: string
