@@ -52,7 +52,7 @@ function newItem(type: string): QuoteItem {
   if (type === 'hotel') return { type: 'hotel', name: 'Hotel', stars: 0, location: '', address: '', checkIn: '', checkOut: '', nights: '', roomType: '', board: '', cancellation: '', price: 0 }
   if (type === 'cruise') return { type: 'cruise', line: '', ship: '', route: '', depart: '', nights: '', cabin: '', cabinLabel: '', boardingTime: '', ports: [], promotion: '', price: 0 }
   if (type === 'tour') return { type: 'tour', name: 'Tour', location: '', date: '', duration: '', includes: '', price: 0 }
-  if (type === 'car') return { type: 'car', company: '', category: '', model: '', pickupLocation: '', pickupCode: '', pickupDate: '', pickupTime: '', dropoffLocation: '', returnCode: '', returnDate: '', returnTime: '', days: '', passengers: '5', bags: '2', doors: '4', ac: 'Sí', transmission: 'Automático', protection: 'Protección Total', promotion: '', price: 0 }
+  if (type === 'car') return { type: 'car', company: '', category: '', model: '', pickupLocation: '', pickupCode: '', pickupAddress: '', pickupDate: '', pickupTime: '', dropoffLocation: '', returnCode: '', returnAddress: '', returnDate: '', returnTime: '', days: '', passengers: '5', bags: '2', doors: '4', ac: 'Sí', transmission: 'Automático', protection: 'Protección Total', promotion: '', price: 0 }
   if (type === 'insurance') return { type: 'insurance', company: '', plan: '', destination: '', startDate: '', endDate: '', days: '', coverage: '', price: 0 }
   return { type: 'transfer', from: '', to: '', date: '', vehicle: '', mode: 'Privado', price: 0 }
 }
@@ -157,7 +157,7 @@ function normalizeItem(it: Record<string, unknown>): QuoteItem | null {
   if (it.type === 'cruise') return { type: 'cruise', line: (it.line as string) || '', ship: (it.ship as string) || '', route: (it.route as string) || '', depart: (it.depart as string) || '', nights: (it.nights as string) || '', cabin: (it.cabin as string) || '', cabinLabel: (it.cabinLabel as string) || '', boardingTime: (it.boardingTime as string) || '', ports: ((it.ports as unknown[]) || []).map((p) => ({ date: (p as Record<string,string>).date || '', port: (p as Record<string,string>).port || '', arr: (p as Record<string,string>).arr || '', dep: (p as Record<string,string>).dep || '' })), promotion: (it.promotion as string) || '', price: parsePrice(it.price) }
   if (it.type === 'tour') return { type: 'tour', name: (it.name as string) || 'Tour', location: (it.location as string) || '', date: (it.date as string) || '', duration: (it.duration as string) || '', includes: (it.includes as string) || '', price: parsePrice(it.price) }
   if (it.type === 'transfer') return { type: 'transfer', from: (it.from as string) || '', to: (it.to as string) || '', date: (it.date as string) || '', vehicle: (it.vehicle as string) || '', mode: (it.mode as string) || 'Privado', price: parsePrice(it.price) }
-  if (it.type === 'car') return { type: 'car', company: (it.company as string) || '', category: (it.category as string) || '', model: (it.model as string) || '', pickupLocation: (it.pickupLocation as string) || '', pickupCode: (it.pickupCode as string) || '', pickupDate: (it.pickupDate as string) || '', pickupTime: (it.pickupTime as string) || '', dropoffLocation: (it.dropoffLocation as string) || '', returnCode: (it.returnCode as string) || '', returnDate: (it.returnDate as string) || '', returnTime: (it.returnTime as string) || '', days: (it.days as string) || '', passengers: (it.passengers as string) || '5', bags: (it.bags as string) || '2', doors: (it.doors as string) || '4', ac: (it.ac as string) || 'Sí', transmission: (it.transmission as string) || 'Automático', protection: (it.protection as string) || '', promotion: (it.promotion as string) || '', price: parsePrice(it.price) }
+  if (it.type === 'car') return { type: 'car', company: (it.company as string) || '', category: (it.category as string) || '', model: (it.model as string) || '', pickupLocation: (it.pickupLocation as string) || '', pickupCode: (it.pickupCode as string) || '', pickupAddress: (it.pickupAddress as string) || '', pickupDate: (it.pickupDate as string) || '', pickupTime: (it.pickupTime as string) || '', dropoffLocation: (it.dropoffLocation as string) || '', returnCode: (it.returnCode as string) || '', returnAddress: (it.returnAddress as string) || '', returnDate: (it.returnDate as string) || '', returnTime: (it.returnTime as string) || '', days: (it.days as string) || '', passengers: (it.passengers as string) || '5', bags: (it.bags as string) || '2', doors: (it.doors as string) || '4', ac: (it.ac as string) || 'Sí', transmission: (it.transmission as string) || 'Automático', protection: (it.protection as string) || '', promotion: (it.promotion as string) || '', price: parsePrice(it.price) }
   if (it.type === 'insurance') return { type: 'insurance', company: (it.company as string) || '', plan: (it.plan as string) || '', destination: (it.destination as string) || '', startDate: (it.startDate as string) || '', endDate: (it.endDate as string) || '', days: (it.days as string) || '', coverage: (it.coverage as string) || '', price: parsePrice(it.price) }
   return null
 }
@@ -1624,10 +1624,14 @@ export default function CotizadorApp() {
                           <label><span style={labelSt}>Precio (USD)</span><input value={ca.price || ''} onChange={e => onField('items.' + idx + '.price', parseFloat(e.target.value) || 0)} type="number" placeholder="0.00" style={{ ...inputSt, fontWeight: 700, color: '#0F3D7A' }} /></label>
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 0.25fr 1fr 0.25fr', gap: 9, marginBottom: 9 }}>
-                          <label><span style={labelSt}>Lugar de recogida</span><input value={ca.pickupLocation} onChange={e => onField('items.' + idx + '.pickupLocation', e.target.value)} placeholder="En Terminal" style={inputSt} /></label>
+                          <label><span style={labelSt}>Lugar de recogida</span><input value={ca.pickupLocation} onChange={e => onField('items.' + idx + '.pickupLocation', e.target.value)} placeholder="Las Vegas Harry Reid Intl Airport" style={inputSt} /></label>
                           <label><span style={labelSt}>Cód. IATA</span><input value={ca.pickupCode} onChange={e => onField('items.' + idx + '.pickupCode', e.target.value.toUpperCase())} placeholder="LAS" maxLength={3} style={{ ...inputSt, fontWeight: 700, textTransform: 'uppercase', textAlign: 'center', letterSpacing: 2 }} /></label>
-                          <label><span style={labelSt}>Lugar de devolución</span><input value={ca.dropoffLocation} onChange={e => onField('items.' + idx + '.dropoffLocation', e.target.value)} placeholder="En Terminal" style={inputSt} /></label>
+                          <label><span style={labelSt}>Lugar de devolución</span><input value={ca.dropoffLocation} onChange={e => onField('items.' + idx + '.dropoffLocation', e.target.value)} placeholder="Miami International Airport" style={inputSt} /></label>
                           <label><span style={labelSt}>Cód. IATA</span><input value={ca.returnCode} onChange={e => onField('items.' + idx + '.returnCode', e.target.value.toUpperCase())} placeholder="MIA" maxLength={3} style={{ ...inputSt, fontWeight: 700, textTransform: 'uppercase', textAlign: 'center', letterSpacing: 2 }} /></label>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9, marginBottom: 9 }}>
+                          <label><span style={labelSt}>Dirección oficina recogida</span><input value={ca.pickupAddress} onChange={e => onField('items.' + idx + '.pickupAddress', e.target.value)} placeholder="Terminal 1, Counter Row B" style={inputSt} /></label>
+                          <label><span style={labelSt}>Dirección oficina devolución</span><input value={ca.returnAddress} onChange={e => onField('items.' + idx + '.returnAddress', e.target.value)} placeholder="Terminal D, Arrivals Level" style={inputSt} /></label>
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', gap: 9 }}>
                           <label><span style={labelSt}>Pasajeros</span><input value={ca.passengers} onChange={e => onField('items.' + idx + '.passengers', e.target.value)} placeholder="5" style={inputSt} /></label>
@@ -2054,27 +2058,29 @@ export default function CotizadorApp() {
 
                             {/* Pickup / Return */}
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1px solid #EDF1F5' }}>
-                              <div style={{ padding: '14px 18px', borderRight: '1px solid #EDF1F5' }}>
-                                <div style={{ fontSize: 10, color: '#16A99C', fontWeight: 700, letterSpacing: '.08em', marginBottom: 6 }}>📍 RECOGIDA</div>
-                                {ca.pickupDate && <div style={{ fontSize: 15, fontWeight: 700, color: '#15293F', marginBottom: 2 }}>{ca.pickupDate}</div>}
-                                {ca.pickupTime && <div style={{ fontSize: 28, fontWeight: 800, color: '#15293F', lineHeight: 1, marginBottom: 6 }}>{ca.pickupTime}</div>}
+                              <div style={{ padding: '16px 18px', borderRight: '1px solid #EDF1F5' }}>
+                                <div style={{ fontSize: 13, color: '#16A99C', fontWeight: 800, letterSpacing: '.06em', marginBottom: 8 }}>📍 RECOGIDA</div>
+                                {ca.pickupDate && <div style={{ fontSize: 16, fontWeight: 700, color: '#15293F', marginBottom: 2 }}>{ca.pickupDate}</div>}
+                                {ca.pickupTime && <div style={{ fontSize: 32, fontWeight: 800, color: '#15293F', lineHeight: 1, marginBottom: 8 }}>{ca.pickupTime}</div>}
                                 {ca.pickupLocation && (
-                                  <div style={{ fontSize: 12, color: '#5B7186', lineHeight: 1.4 }}>
+                                  <div style={{ fontSize: 13, fontWeight: 600, color: '#15293F', lineHeight: 1.4, marginBottom: 2 }}>
                                     {ca.pickupLocation}
                                     {ca.pickupCode && <span style={{ display: 'inline-block', marginLeft: 6, background: '#EEF3FB', color: '#0F3D7A', fontWeight: 800, fontSize: 12, padding: '2px 7px', borderRadius: 5 }}>{ca.pickupCode}</span>}
                                   </div>
                                 )}
+                                {ca.pickupAddress && <div style={{ fontSize: 12, color: '#8896A6', lineHeight: 1.4 }}>{ca.pickupAddress}</div>}
                               </div>
-                              <div style={{ padding: '14px 18px' }}>
-                                <div style={{ fontSize: 10, color: '#E0483E', fontWeight: 700, letterSpacing: '.08em', marginBottom: 6 }}>🏁 DEVOLUCIÓN</div>
-                                {ca.returnDate && <div style={{ fontSize: 15, fontWeight: 700, color: '#15293F', marginBottom: 2 }}>{ca.returnDate}</div>}
-                                {ca.returnTime && <div style={{ fontSize: 28, fontWeight: 800, color: '#15293F', lineHeight: 1, marginBottom: 6 }}>{ca.returnTime}</div>}
+                              <div style={{ padding: '16px 18px' }}>
+                                <div style={{ fontSize: 13, color: '#E0483E', fontWeight: 800, letterSpacing: '.06em', marginBottom: 8 }}>🏁 DEVOLUCIÓN</div>
+                                {ca.returnDate && <div style={{ fontSize: 16, fontWeight: 700, color: '#15293F', marginBottom: 2 }}>{ca.returnDate}</div>}
+                                {ca.returnTime && <div style={{ fontSize: 32, fontWeight: 800, color: '#15293F', lineHeight: 1, marginBottom: 8 }}>{ca.returnTime}</div>}
                                 {ca.dropoffLocation && (
-                                  <div style={{ fontSize: 12, color: '#5B7186', lineHeight: 1.4 }}>
+                                  <div style={{ fontSize: 13, fontWeight: 600, color: '#15293F', lineHeight: 1.4, marginBottom: 2 }}>
                                     {ca.dropoffLocation}
                                     {ca.returnCode && <span style={{ display: 'inline-block', marginLeft: 6, background: '#EEF3FB', color: '#0F3D7A', fontWeight: 800, fontSize: 12, padding: '2px 7px', borderRadius: 5 }}>{ca.returnCode}</span>}
                                   </div>
                                 )}
+                                {ca.returnAddress && <div style={{ fontSize: 12, color: '#8896A6', lineHeight: 1.4 }}>{ca.returnAddress}</div>}
                               </div>
                             </div>
 

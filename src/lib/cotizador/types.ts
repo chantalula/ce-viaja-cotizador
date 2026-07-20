@@ -96,10 +96,12 @@ export interface CarItem {
   model: string
   pickupLocation: string
   pickupCode: string
+  pickupAddress: string
   pickupDate: string
   pickupTime: string
   dropoffLocation: string
   returnCode: string
+  returnAddress: string
   returnDate: string
   returnTime: string
   days: string
