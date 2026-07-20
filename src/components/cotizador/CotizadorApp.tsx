@@ -1000,10 +1000,14 @@ export default function CotizadorApp() {
   const ninoCount     = (quote.pax || []).filter(p => p.type === 'Niño').length
   const jubCount      = (quote.pax || []).filter(p => p.type === 'Jubilado').length
   const infanteCount  = (quote.pax || []).filter(p => p.type === 'Infante').length
-  const total = adultoCount  * (quote.priceAdulto   || 0)
-              + ninoCount    * (quote.priceNino      || 0)
-              + jubCount     * (quote.priceJubilado  || 0)
-              + infanteCount * (quote.priceInfante   || 0)
+  const paxTotal = adultoCount  * (quote.priceAdulto   || 0)
+                 + ninoCount    * (quote.priceNino      || 0)
+                 + jubCount     * (quote.priceJubilado  || 0)
+                 + infanteCount * (quote.priceInfante   || 0)
+  const itemsTotal = (quote.items || [])
+    .filter(it => it.type !== 'flight' && it.type !== 'cruise')
+    .reduce((a, it) => a + (it.price || 0), 0)
+  const total = paxTotal + itemsTotal
   const paxCount = (quote.pax || []).length
   const perPax = paxCount > 0 ? total / paxCount : total
   const totalFmt = money(total, quote.currency)
@@ -1512,9 +1516,10 @@ export default function CotizadorApp() {
                           <label><span style={labelSt}>Check-out</span><input value={hi.checkOut} onChange={e => onField('items.' + idx + '.checkOut', e.target.value)} style={inputSt} /></label>
                           <label><span style={labelSt}>Noches</span><input value={hi.nights} onChange={e => onField('items.' + idx + '.nights', e.target.value)} style={inputSt} /></label>
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9, marginBottom: 9 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 9, marginBottom: 9 }}>
                           <label><span style={labelSt}>Habitación</span><input value={hi.roomType} onChange={e => onField('items.' + idx + '.roomType', e.target.value)} placeholder="Doble Superior" style={inputSt} /></label>
                           <label><span style={labelSt}>Régimen</span><input value={hi.board} onChange={e => onField('items.' + idx + '.board', e.target.value)} placeholder="Desayuno incluido" style={inputSt} /></label>
+                          <label><span style={labelSt}>Precio (USD)</span><input value={hi.price || ''} onChange={e => onField('items.' + idx + '.price', parseFloat(e.target.value) || 0)} type="number" placeholder="0.00" style={{ ...inputSt, fontWeight: 700, color: '#0F3D7A' }} /></label>
                         </div>
                         <div style={{ marginBottom: 9 }}>
                           <span style={labelSt}>Cancelación</span>
@@ -1584,10 +1589,11 @@ export default function CotizadorApp() {
                     return (
                       <>
                         <label style={{ display: 'block', marginBottom: 9 }}><span style={labelSt}>Nombre del tour</span><input value={ti.name} onChange={e => onField('items.' + idx + '.name', e.target.value)} style={inputSt} /></label>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr', gap: 9, marginBottom: 9 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr', gap: 9, marginBottom: 9 }}>
                           <label><span style={labelSt}>Lugar</span><input value={ti.location} onChange={e => onField('items.' + idx + '.location', e.target.value)} style={inputSt} /></label>
                           <label><span style={labelSt}>Fecha</span><input value={ti.date} onChange={e => onField('items.' + idx + '.date', e.target.value)} style={inputSt} /></label>
                           <label><span style={labelSt}>Duración</span><input value={ti.duration} onChange={e => onField('items.' + idx + '.duration', e.target.value)} style={inputSt} /></label>
+                          <label><span style={labelSt}>Precio (USD)</span><input value={ti.price || ''} onChange={e => onField('items.' + idx + '.price', parseFloat(e.target.value) || 0)} type="number" placeholder="0.00" style={{ ...inputSt, fontWeight: 700, color: '#0F3D7A' }} /></label>
                         </div>
                         <label><span style={labelSt}>Incluye</span><input value={ti.includes} onChange={e => onField('items.' + idx + '.includes', e.target.value)} placeholder="Guía, transporte, entradas" style={inputSt} /></label>
                       </>
@@ -1605,13 +1611,14 @@ export default function CotizadorApp() {
                           <label><span style={labelSt}>Modelo</span><input value={ca.model} onChange={e => onField('items.' + idx + '.model', e.target.value)} placeholder="Mazda CX-50 o similar" style={inputSt} /></label>
                           <label><span style={labelSt}>Promoción</span><input value={ca.promotion} onChange={e => onField('items.' + idx + '.promotion', e.target.value)} placeholder="PROMO ★★★" style={inputSt} /></label>
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.8fr 1.4fr 0.8fr 0.6fr 1.2fr', gap: 9, marginBottom: 9 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.8fr 1.4fr 0.8fr 0.6fr 1.2fr 1fr', gap: 9, marginBottom: 9 }}>
                           <label><span style={labelSt}>Fecha recogida</span><input value={ca.pickupDate} onChange={e => onField('items.' + idx + '.pickupDate', e.target.value)} placeholder="Lun 21 jul" style={inputSt} /></label>
                           <label><span style={labelSt}>Hora recogida</span><input value={ca.pickupTime} onChange={e => onField('items.' + idx + '.pickupTime', e.target.value)} placeholder="10:00" style={inputSt} /></label>
                           <label><span style={labelSt}>Fecha devolución</span><input value={ca.returnDate} onChange={e => onField('items.' + idx + '.returnDate', e.target.value)} placeholder="Jue 7 ago" style={inputSt} /></label>
                           <label><span style={labelSt}>Hora devolución</span><input value={ca.returnTime} onChange={e => onField('items.' + idx + '.returnTime', e.target.value)} placeholder="14:00" style={inputSt} /></label>
                           <label><span style={labelSt}>Días</span><input value={ca.days} onChange={e => onField('items.' + idx + '.days', e.target.value)} placeholder="17" style={inputSt} /></label>
                           <label><span style={labelSt}>Protección</span><input value={ca.protection} onChange={e => onField('items.' + idx + '.protection', e.target.value)} placeholder="Protección Total" style={inputSt} /></label>
+                          <label><span style={labelSt}>Precio (USD)</span><input value={ca.price || ''} onChange={e => onField('items.' + idx + '.price', parseFloat(e.target.value) || 0)} type="number" placeholder="0.00" style={{ ...inputSt, fontWeight: 700, color: '#0F3D7A' }} /></label>
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9, marginBottom: 9 }}>
                           <label><span style={labelSt}>Lugar de recogida</span><input value={ca.pickupLocation} onChange={e => onField('items.' + idx + '.pickupLocation', e.target.value)} placeholder="En Terminal" style={inputSt} /></label>
@@ -1665,7 +1672,7 @@ export default function CotizadorApp() {
                           <label><span style={labelSt}>Desde</span><input value={tr.from} onChange={e => onField('items.' + idx + '.from', e.target.value)} placeholder="Aeropuerto MAD" style={inputSt} /></label>
                           <label><span style={labelSt}>Hasta</span><input value={tr.to} onChange={e => onField('items.' + idx + '.to', e.target.value)} placeholder="Hotel centro" style={inputSt} /></label>
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 9 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 9 }}>
                           <label><span style={labelSt}>Fecha</span><input value={tr.date} onChange={e => onField('items.' + idx + '.date', e.target.value)} style={inputSt} /></label>
                           <label><span style={labelSt}>Vehículo</span><input value={tr.vehicle} onChange={e => onField('items.' + idx + '.vehicle', e.target.value)} placeholder="Van privada" style={inputSt} /></label>
                           <label><span style={labelSt}>Tipo</span>
@@ -1673,6 +1680,7 @@ export default function CotizadorApp() {
                               <option>Privado</option><option>Compartido</option>
                             </select>
                           </label>
+                          <label><span style={labelSt}>Precio (USD)</span><input value={tr.price || ''} onChange={e => onField('items.' + idx + '.price', parseFloat(e.target.value) || 0)} type="number" placeholder="0.00" style={{ ...inputSt, fontWeight: 700, color: '#0F3D7A' }} /></label>
                         </div>
                       </>
                     )
