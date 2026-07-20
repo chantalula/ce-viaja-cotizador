@@ -624,8 +624,6 @@ export default function CotizadorApp() {
         return
       }
 
-      console.log('[IMPORT RAW]', JSON.stringify(data, null, 2))
-
       const rawItems = Array.isArray(data.items) ? data.items : []
       const newItems = rawItems
         .map((it: Record<string, unknown>) => {
@@ -635,8 +633,6 @@ export default function CotizadorApp() {
           return normalizeItem(it)
         })
         .filter(Boolean) as QuoteItem[]
-
-      console.log('[IMPORT ITEMS]', rawItems.map((it: Record<string, unknown>) => ({ type: it.type, price: it.price })))
 
       // Rescue: AI sometimes routes car price to root-level price fields instead of item.price
       const hasFlightOrCruise = newItems.some(it => it.type === 'flight' || it.type === 'cruise')
@@ -652,17 +648,6 @@ export default function CotizadorApp() {
           data.priceNino = 0
           data.priceJubilado = 0
         }
-      }
-      // Debug: show what AI returned for car price fields (temporary)
-      if (carIdx2 >= 0) {
-        const carRaw = (Array.isArray(data.items) ? data.items : [])[carIdx2] as Record<string, unknown> | undefined
-        console.log('[CARRO IMPORT]', {
-          'item.price (raw)': carRaw?.price,
-          'priceAdulto (raw)': data.priceAdulto,
-          'priceNino (raw)': data.priceNino,
-          'priceJubilado (raw)': data.priceJubilado,
-          'precio final': (newItems[carIdx2] as CarItem).price,
-        })
       }
 
       setQuote(q => {
