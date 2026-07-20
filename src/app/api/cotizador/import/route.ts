@@ -15,6 +15,7 @@ CARRO: {"type":"car","company":"","category":"","model":"","pickupLocation":"","
 Reglas:
 - PASAPORTE: llena "client", "clientPassport" y agrega a "pax". No inventes vuelos.
 - "client": nombre del titular o grupo. NUNCA el código de reservación.
+- DOCUMENTOS CE VIAJA: Los itinerarios preparados por CE Viaja pueden tener secciones "OTROS" o "NOTAS" al final que contienen solo despedidas ("GRACIAS", "FELIZ VIAJE", "RECUERDE REVISAR VISA", etc.). IGNORA completamente esas secciones — no crees ningún item de viaje para ellas. El campo "PREPARADO PARA" indica el nombre del cliente (va en "client"), no es un pasajero de vuelo.
 - Precios numéricos sin símbolo ni comas. Moneda USD. IMPORTANTE: el precio de cada item (vuelo, hotel, carro, crucero, tour, traslado, seguro) va SIEMPRE en el campo "price" de ese item. Los campos "priceAdulto", "priceNino", "priceJubilado" son SOLO para cuando el documento muestra precios desglosados por tipo de pasajero para vuelos o cruceros. El campo "taxes" es para impuestos generales del itinerario. NUNCA pongas el precio de un carro o hotel en "priceAdulto".
 - Horas en formato 24h (HH:MM). Conversión AM/PM: 12AM→00, 1AM→01, 6AM→06, 11AM→11, 12PM→12, 1PM→13, 2PM→14, 3PM→15, 4PM→16, 5PM→17, 6PM→18, 7PM→19, 8PM→20, 9PM→21, 10PM→22, 11PM→23. Ejemplo: "4:07 PM" → "16:07", "8:30 AM" → "08:30", "12:00 AM" → "00:00".
 - "Economy"/"Turista"="Económica"; "Business"="Ejecutiva".
@@ -32,10 +33,12 @@ Reglas:
   "pickupTime"/"returnTime"= hora de recogida y hora de devolución en formato 24h (ej: "10:00", "14:30"). Busca campos como "Pick-up Time", "Return Time", "Hora de recogida", "Hora de devolución", horarios junto a la fecha.
   "days"= número de días de renta
   "protection"= tipo de protección incluida (CDW, LDW, LIS, PAI, etc.)
-  ⚠️ PRECIO DEL CARRO — REGLA ABSOLUTA: El precio va ÚNICAMENTE en el campo "price" dentro del item de tipo "car". Los campos "priceAdulto", "priceNino", "priceJubilado" en la raíz del JSON son EXCLUSIVAMENTE para vuelos y cruceros con desglose por tipo de pasajero — NUNCA para carros. Para el carro siempre pon 0 en priceAdulto/priceNino/priceJubilado y el total en items[n].price.
-  Para imágenes/capturas de pantalla de confirmación de alquiler: el precio total generalmente aparece al final del documento o en un recuadro resaltado en negritas. Busca el valor en dólares más grande que no sea la tarifa por día. Etiquetas comunes: "Estimated Total", "Total Charges", "Amount Due", "Grand Total", "Total Due", "Charge Total", "Total Estimated", "Precio Total", "Total a Pagar". Si solo ves tarifa por día ("Daily Rate", "Rate/Day"), multiplícala por los días.
-  EJEMPLO CORRECTO: {"priceAdulto":0,"priceNino":0,"priceJubilado":0,"items":[{"type":"car","price":523.45}]}
-  EJEMPLO INCORRECTO (NUNCA): {"priceAdulto":523.45,"priceNino":0,"priceJubilado":0,"items":[{"type":"car","price":0}]}
+  ⚠️ CARRO — REGLAS ABSOLUTAS:
+  1. El precio va ÚNICAMENTE en items[n].price. NUNCA en priceAdulto, priceNino, priceJubilado — esos campos son SOLO para vuelos/cruceros. Para carro siempre pon priceAdulto:0, priceNino:0, priceJubilado:0.
+  2. Un alquiler de carro NO tiene pasajeros con nombre. Pon "pax":[] (array vacío) cuando el documento sea solo de carro.
+  3. Para encontrar el precio busca: "Estimated Total", "Total Charges", "Amount Due", "Grand Total", "Total Due", "Charge Total", "Total Estimated", "Precio Total". Si solo hay tarifa por día multiplícala por los días.
+  CORRECTO: {"pax":[],"priceAdulto":0,"priceNino":0,"priceJubilado":0,"items":[{"type":"car","price":523.45}]}
+  INCORRECTO: {"pax":[{"name":"Driver","type":"Adulto"}],"priceAdulto":523.45,"items":[{"type":"car","price":0}]}
 - Fechas en español corto: "Jue 21 may 2026". Deja "" o 0 lo que no aparezca.
 - "duration": déjalo SIEMPRE como "" (cadena vacía). El sistema calcula la duración correcta con cambio de horario automáticamente. EXCEPCIÓN: si la duración aparece explícita en el documento (ej: "9h 45m", "Flight time 10:20"), úsala tal cual en formato "Xh Ym".`
 

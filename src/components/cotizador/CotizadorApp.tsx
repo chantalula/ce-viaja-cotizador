@@ -635,9 +635,12 @@ export default function CotizadorApp() {
         .filter(Boolean) as QuoteItem[]
 
       // Rescue: AI sometimes routes car price to root-level price fields instead of item.price
-      const hasFlightOrCruise = newItems.some(it => it.type === 'flight' || it.type === 'cruise')
+      // Only skip rescue if there's a flight/cruise that itself has a non-zero price
+      const hasPricedFlightOrCruise = newItems.some(
+        it => (it.type === 'flight' || it.type === 'cruise') && it.price > 0
+      )
       const carIdx2 = newItems.findIndex(it => it.type === 'car')
-      if (!hasFlightOrCruise && carIdx2 >= 0 && (newItems[carIdx2] as CarItem).price === 0) {
+      if (!hasPricedFlightOrCruise && carIdx2 >= 0 && (newItems[carIdx2] as CarItem).price === 0) {
         const rescuePrice =
           parsePrice(data.priceAdulto) ||
           parsePrice(data.priceNino) ||
