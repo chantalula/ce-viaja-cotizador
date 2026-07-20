@@ -319,6 +319,17 @@ export default function CotizadorApp() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Auto-fetch missing car photos whenever items change (e.g. after loading a saved quote)
+  useEffect(() => {
+    (quote.items || []).forEach((item, idx) => {
+      if (item.type !== 'car') return
+      const ca = item as CarItem
+      const key = `car${idx}-photo`
+      if (!carPhotos[key] && ca.model) fetchCarPhoto(ca.model, idx)
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quote.items])
+
   async function initQuoteNumber() {
     try {
       const res = await fetch('/api/cotizador/quote-number', { method: 'POST' })
