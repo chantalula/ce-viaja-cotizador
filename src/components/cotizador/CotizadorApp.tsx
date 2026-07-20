@@ -325,7 +325,7 @@ export default function CotizadorApp() {
       if (item.type !== 'car') return
       const ca = item as CarItem
       const key = `car${idx}-photo`
-      if (!carPhotos[key] && ca.model) fetchCarPhoto(ca.model, idx)
+      if (!carPhotos[key] && (ca.model || ca.category)) fetchCarPhoto(ca.model, idx, ca.category)
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quote.items])
@@ -714,9 +714,9 @@ export default function CotizadorApp() {
               })
               const bbox = await bboxRes.json() as { found: boolean; x: number; y: number; w: number; h: number }
               if (!bbox.found) {
-                // No car image in document → search Pexels by model
+                // No car image in document → search Pexels by model/category
                 const ca = newItems[carIdx] as CarItem
-                if (ca.model) fetchCarPhoto(ca.model, carIdx)
+                fetchCarPhoto(ca.model, carIdx, ca.category)
                 return
               }
               const img = new window.Image()
@@ -738,13 +738,13 @@ export default function CotizadorApp() {
             } catch {
               // On any error, fall back to Pexels
               const ca = newItems[carIdx] as CarItem
-              if (ca.model) fetchCarPhoto(ca.model, carIdx)
+              fetchCarPhoto(ca.model, carIdx, ca.category)
             }
           }
           reader.readAsDataURL(imageFile)
         } else {
           const ca = newItems[carIdx] as CarItem
-          if (ca.model) fetchCarPhoto(ca.model, carIdx)
+          fetchCarPhoto(ca.model, carIdx, ca.category)
         }
       }
 
@@ -828,14 +828,15 @@ export default function CotizadorApp() {
     }
   }
 
-  async function fetchCarPhoto(model: string, idx: number) {
-    if (!model.trim()) return
+  async function fetchCarPhoto(model: string, idx: number, categoryFallback?: string) {
+    const item = quote.items?.[idx] as CarItem | undefined
+    const category = categoryFallback || item?.category || ''
+    if (!model.trim() && !category.trim()) return
     try {
-      const item = quote.items?.[idx] as CarItem | undefined
       const res = await fetch('/api/cotizador/car-photo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model, category: item?.category || '' }),
+        body: JSON.stringify({ model: model.trim(), category }),
       })
       if (!res.ok) return
       const data = await res.json() as { url?: string }
