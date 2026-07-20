@@ -624,9 +624,19 @@ export default function CotizadorApp() {
         return
       }
 
-      const newItems = (Array.isArray(data.items) ? data.items : [])
-        .map((it: Record<string, unknown>) => normalizeItem(it))
+      console.log('[IMPORT RAW]', JSON.stringify(data, null, 2))
+
+      const rawItems = Array.isArray(data.items) ? data.items : []
+      const newItems = rawItems
+        .map((it: Record<string, unknown>) => {
+          // Normalize type variants Claude might return
+          const t = (it.type as string || '').toLowerCase().trim()
+          if (t === 'carro' || t === 'car rental' || t === 'rental' || t === 'alquiler') it.type = 'car'
+          return normalizeItem(it)
+        })
         .filter(Boolean) as QuoteItem[]
+
+      console.log('[IMPORT ITEMS]', rawItems.map((it: Record<string, unknown>) => ({ type: it.type, price: it.price })))
 
       // Rescue: AI sometimes routes car price to root-level price fields instead of item.price
       const hasFlightOrCruise = newItems.some(it => it.type === 'flight' || it.type === 'cruise')
