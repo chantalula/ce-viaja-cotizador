@@ -628,14 +628,31 @@ export default function CotizadorApp() {
         .map((it: Record<string, unknown>) => normalizeItem(it))
         .filter(Boolean) as QuoteItem[]
 
-      // Rescue: AI sometimes routes car total price to priceAdulto instead of item.price
+      // Rescue: AI sometimes routes car price to root-level price fields instead of item.price
       const hasFlightOrCruise = newItems.some(it => it.type === 'flight' || it.type === 'cruise')
-      if (!hasFlightOrCruise && parsePrice(data.priceAdulto) > 0) {
-        const carIdx = newItems.findIndex(it => it.type === 'car')
-        if (carIdx >= 0 && (newItems[carIdx] as CarItem).price === 0) {
-          ;(newItems[carIdx] as CarItem).price = parsePrice(data.priceAdulto)
+      const carIdx2 = newItems.findIndex(it => it.type === 'car')
+      if (!hasFlightOrCruise && carIdx2 >= 0 && (newItems[carIdx2] as CarItem).price === 0) {
+        const rescuePrice =
+          parsePrice(data.priceAdulto) ||
+          parsePrice(data.priceNino) ||
+          parsePrice(data.priceJubilado)
+        if (rescuePrice > 0) {
+          ;(newItems[carIdx2] as CarItem).price = rescuePrice
           data.priceAdulto = 0
+          data.priceNino = 0
+          data.priceJubilado = 0
         }
+      }
+      // Debug: show what AI returned for car price fields (temporary)
+      if (carIdx2 >= 0) {
+        const carRaw = (Array.isArray(data.items) ? data.items : [])[carIdx2] as Record<string, unknown> | undefined
+        console.log('[CARRO IMPORT]', {
+          'item.price (raw)': carRaw?.price,
+          'priceAdulto (raw)': data.priceAdulto,
+          'priceNino (raw)': data.priceNino,
+          'priceJubilado (raw)': data.priceJubilado,
+          'precio final': (newItems[carIdx2] as CarItem).price,
+        })
       }
 
       setQuote(q => {

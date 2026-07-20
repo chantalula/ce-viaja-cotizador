@@ -32,10 +32,10 @@ Reglas:
   "pickupTime"/"returnTime"= hora de recogida y hora de devolución en formato 24h (ej: "10:00", "14:30"). Busca campos como "Pick-up Time", "Return Time", "Hora de recogida", "Hora de devolución", horarios junto a la fecha.
   "days"= número de días de renta
   "protection"= tipo de protección incluida (CDW, LDW, LIS, PAI, etc.)
-  ⚠️ PRECIO DEL CARRO — REGLA ABSOLUTA: El precio va ÚNICAMENTE en el campo "price" dentro del item de tipo "car". Los campos "priceAdulto", "priceNino", "priceJubilado" en la raíz del JSON son EXCLUSIVAMENTE para vuelos y cruceros con desglose por tipo de pasajero — NUNCA para carros, hoteles, tours o traslados. Para esos items siempre usa "price" dentro del item y pon 0 en priceAdulto/priceNino/priceJubilado.
-  Busca el precio en: "Estimated Total", "Total Charges", "Amount Due", "Grand Total", "Total Estimated", "Precio Total", "Total a Pagar", "Total Due", "Charge Total". Si solo ves tarifa por día ("Daily Rate", "Rate/Day"), multiplícala por los días.
+  ⚠️ PRECIO DEL CARRO — REGLA ABSOLUTA: El precio va ÚNICAMENTE en el campo "price" dentro del item de tipo "car". Los campos "priceAdulto", "priceNino", "priceJubilado" en la raíz del JSON son EXCLUSIVAMENTE para vuelos y cruceros con desglose por tipo de pasajero — NUNCA para carros. Para el carro siempre pon 0 en priceAdulto/priceNino/priceJubilado y el total en items[n].price.
+  Para imágenes/capturas de pantalla de confirmación de alquiler: el precio total generalmente aparece al final del documento o en un recuadro resaltado en negritas. Busca el valor en dólares más grande que no sea la tarifa por día. Etiquetas comunes: "Estimated Total", "Total Charges", "Amount Due", "Grand Total", "Total Due", "Charge Total", "Total Estimated", "Precio Total", "Total a Pagar". Si solo ves tarifa por día ("Daily Rate", "Rate/Day"), multiplícala por los días.
   EJEMPLO CORRECTO: {"priceAdulto":0,"priceNino":0,"priceJubilado":0,"items":[{"type":"car","price":523.45}]}
-  EJEMPLO INCORRECTO: {"priceAdulto":523.45,"items":[{"type":"car","price":0}]}
+  EJEMPLO INCORRECTO (NUNCA): {"priceAdulto":523.45,"priceNino":0,"priceJubilado":0,"items":[{"type":"car","price":0}]}
 - Fechas en español corto: "Jue 21 may 2026". Deja "" o 0 lo que no aparezca.
 - "duration": déjalo SIEMPRE como "" (cadena vacía). El sistema calcula la duración correcta con cambio de horario automáticamente. EXCEPCIÓN: si la duración aparece explícita en el documento (ej: "9h 45m", "Flight time 10:20"), úsala tal cual en formato "Xh Ym".`
 
