@@ -11,6 +11,7 @@ HOTEL: {"type":"hotel","name":"","stars":0,"location":"","address":"","checkIn":
 CRUCERO: {"type":"cruise","line":"","ship":"","route":"","depart":"","nights":"","cabin":"","cabinLabel":"","boardingTime":"","ports":[{"date":"","port":"","arr":"","dep":""}],"promotion":"","price":0}
 TOUR: {"type":"tour","name":"","location":"","date":"","duration":"","includes":"","price":0}
 TRASLADO: {"type":"transfer","from":"","to":"","date":"","vehicle":"","mode":"Privado","price":0}
+PAQUETE: {"type":"package","name":"","destination":"","startDate":"","endDate":"","duration":"","includes":"","description":"","promotion":"","price":0}
 CARRO: {"type":"car","company":"","category":"","model":"","pickupLocation":"","pickupCode":"","pickupAddress":"","pickupDate":"","pickupTime":"","dropoffLocation":"","returnCode":"","returnAddress":"","returnDate":"","returnTime":"","days":"","passengers":"5","bags":"2","doors":"4","ac":"Sí","transmission":"Automático","protection":"","promotion":"","price":0}
 Reglas:
 - PASAPORTE: llena "client", "clientPassport" y agrega a "pax". No inventes vuelos.
@@ -41,6 +42,7 @@ Reglas:
   3. Para encontrar el precio busca: "Estimated Total", "Total Charges", "Amount Due", "Grand Total", "Total Due", "Charge Total", "Total Estimated", "Precio Total". Si solo hay tarifa por día multiplícala por los días.
   CORRECTO: {"pax":[],"priceAdulto":0,"priceNino":0,"priceJubilado":0,"items":[{"type":"car","price":523.45}]}
   INCORRECTO: {"pax":[{"name":"Driver","type":"Adulto"}],"priceAdulto":523.45,"items":[{"type":"car","price":0}]}
+- PAQUETE: Úsalo cuando el documento describe un paquete turístico completo (combinación de vuelo+hotel+traslados u otros servicios como un todo). "name"=nombre del paquete (ej: "Paquete Cancún 7 Noches Todo Incluido"), "destination"=destino principal, "startDate"/"endDate"=fechas en español corto, "duration"=duración (ej: "7 días / 6 noches"), "includes"=lista de lo que incluye (ej: "Vuelo redondo · Hotel 5★ todo incluido · Traslados · Seguro de viaje"), "description"=descripción detallada del paquete, "promotion"=promoción si aplica, "price"=precio total del paquete.
 - Fechas en español corto: "Jue 21 may 2026". Deja "" o 0 lo que no aparezca.
 - "duration": déjalo SIEMPRE como "" (cadena vacía). El sistema calcula la duración correcta con cambio de horario automáticamente. EXCEPCIÓN: si la duración aparece explícita en el documento (ej: "9h 45m", "Flight time 10:20"), úsala tal cual en formato "Xh Ym".`
 

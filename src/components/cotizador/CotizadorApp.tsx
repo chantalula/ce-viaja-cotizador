@@ -14,6 +14,7 @@ import type {
   TransferItem,
   CarItem,
   InsuranceItem,
+  PackageItem,
   QuoteDoc,
   QuoteItem,
   SavedQuote,
@@ -54,6 +55,7 @@ function newItem(type: string): QuoteItem {
   if (type === 'tour') return { type: 'tour', name: 'Tour', location: '', date: '', duration: '', includes: '', price: 0 }
   if (type === 'car') return { type: 'car', company: '', category: '', model: '', pickupLocation: '', pickupCode: '', pickupAddress: '', pickupDate: '', pickupTime: '', dropoffLocation: '', returnCode: '', returnAddress: '', returnDate: '', returnTime: '', days: '', passengers: '5', bags: '2', doors: '4', ac: 'Sí', transmission: 'Automático', protection: 'Protección Total', promotion: '', price: 0 }
   if (type === 'insurance') return { type: 'insurance', company: '', plan: '', destination: '', startDate: '', endDate: '', days: '', coverage: '', price: 0 }
+  if (type === 'package') return { type: 'package', name: '', destination: '', startDate: '', endDate: '', duration: '', includes: '', description: '', promotion: '', price: 0 }
   return { type: 'transfer', from: '', to: '', date: '', vehicle: '', mode: 'Privado', price: 0 }
 }
 
@@ -159,6 +161,7 @@ function normalizeItem(it: Record<string, unknown>): QuoteItem | null {
   if (it.type === 'transfer') return { type: 'transfer', from: (it.from as string) || '', to: (it.to as string) || '', date: (it.date as string) || '', vehicle: (it.vehicle as string) || '', mode: (it.mode as string) || 'Privado', price: parsePrice(it.price) }
   if (it.type === 'car') return { type: 'car', company: (it.company as string) || '', category: (it.category as string) || '', model: (it.model as string) || '', pickupLocation: (it.pickupLocation as string) || '', pickupCode: (it.pickupCode as string) || '', pickupAddress: (it.pickupAddress as string) || '', pickupDate: (it.pickupDate as string) || '', pickupTime: (it.pickupTime as string) || '', dropoffLocation: (it.dropoffLocation as string) || '', returnCode: (it.returnCode as string) || '', returnAddress: (it.returnAddress as string) || '', returnDate: (it.returnDate as string) || '', returnTime: (it.returnTime as string) || '', days: (it.days as string) || '', passengers: (it.passengers as string) || '5', bags: (it.bags as string) || '2', doors: (it.doors as string) || '4', ac: (it.ac as string) || 'Sí', transmission: (it.transmission as string) || 'Automático', protection: (it.protection as string) || '', promotion: (it.promotion as string) || '', price: parsePrice(it.price) }
   if (it.type === 'insurance') return { type: 'insurance', company: (it.company as string) || '', plan: (it.plan as string) || '', destination: (it.destination as string) || '', startDate: (it.startDate as string) || '', endDate: (it.endDate as string) || '', days: (it.days as string) || '', coverage: (it.coverage as string) || '', price: parsePrice(it.price) }
+  if (it.type === 'package') return { type: 'package', name: (it.name as string) || '', destination: (it.destination as string) || '', startDate: (it.startDate as string) || '', endDate: (it.endDate as string) || '', duration: (it.duration as string) || '', includes: (it.includes as string) || '', description: (it.description as string) || '', promotion: (it.promotion as string) || '', price: parsePrice(it.price) }
   return null
 }
 
@@ -264,6 +267,7 @@ export default function CotizadorApp() {
   const [clients, setClients] = useState<CRMClient[]>([])
   const [hotelPhotos, setHotelPhotos] = useState<Record<string, string>>({})
   const [carPhotos, setCarPhotos] = useState<Record<string, string>>({})
+  const [packagePhotos, setPackagePhotos] = useState<Record<string, string[]>>({})
   const [cruisePhotos, setCruisePhotos] = useState<Record<string, string>>({})
   // keys: `${idx}-ext` (ship exterior) and `${idx}-cabin` (cabin interior)
   const [shipAutoPhoto, setShipAutoPhoto] = useState<Record<string, string>>({})
@@ -319,13 +323,19 @@ export default function CotizadorApp() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Auto-fetch missing car photos whenever items change (e.g. after loading a saved quote)
+  // Auto-fetch missing photos whenever items change (e.g. after loading a saved quote)
   useEffect(() => {
     (quote.items || []).forEach((item, idx) => {
-      if (item.type !== 'car') return
-      const ca = item as CarItem
-      const key = `car${idx}-photo`
-      if (!carPhotos[key] && (ca.model || ca.category)) fetchCarPhoto(ca.model, idx, ca.category)
+      if (item.type === 'car') {
+        const ca = item as CarItem
+        if (!carPhotos[`car${idx}-photo`] && (ca.model || ca.category)) fetchCarPhoto(ca.model, idx, ca.category)
+      }
+      if (item.type === 'package') {
+        const pk = item as PackageItem
+        if (!packagePhotos[`pkg${idx}`]?.length && (pk.destination || pk.name)) {
+          fetchPackagePhotos(pk.destination, pk.name, idx)
+        }
+      }
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quote.items])
@@ -391,12 +401,12 @@ export default function CotizadorApp() {
       fresh.number = fmtNum(data.value)
       fresh.sellerIndex = quote.sellerIndex
       setQuote(fresh)
-      setHotelPhotos({}); setCarPhotos({})
+      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({})
     } catch {
       const fresh = seed()
       fresh.sellerIndex = quote.sellerIndex
       setQuote(fresh)
-      setHotelPhotos({}); setCarPhotos({})
+      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({})
     }
   }
 
@@ -443,7 +453,7 @@ export default function CotizadorApp() {
     const r = savedQuotes.find(x => x.id === id)
     if (r) {
       setQuote(JSON.parse(JSON.stringify(r.quote)))
-      setHotelPhotos({}); setCarPhotos({})
+      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({})
       setShowDB(false)
     }
   }
@@ -452,7 +462,7 @@ export default function CotizadorApp() {
     const r = savedQuotes.find(x => x.id === id)
     if (!r) return
     setQuote(JSON.parse(JSON.stringify(r.quote)))
-    setHotelPhotos({}); setCarPhotos({})
+    setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({})
     setShowDB(false)
     // Wait one frame for the doc to render, then generate PDF
     await new Promise(res => setTimeout(res, 600))
@@ -468,7 +478,7 @@ export default function CotizadorApp() {
       const q: QuoteDoc = JSON.parse(JSON.stringify(r.quote))
       q.number = fmtNum(data.value)
       setQuote(q)
-      setHotelPhotos({}); setCarPhotos({})
+      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({})
       setShowDB(false)
       showToast('Cotización duplicada')
     } catch {
@@ -692,6 +702,10 @@ export default function CotizadorApp() {
             const firstPort = ci.ports?.find(p => p.port?.trim())
             if (firstPort) fetchPortPhoto(firstPort.port, idx)
           }
+          if (item.type === 'package') {
+            const pk = item as PackageItem
+            if (pk.destination || pk.name) fetchPackagePhotos(pk.destination, pk.name, idx)
+          }
         })
         return updated
       })
@@ -844,6 +858,20 @@ export default function CotizadorApp() {
     } catch { /* ignore */ }
   }
 
+  async function fetchPackagePhotos(destination: string, name: string, idx: number) {
+    if (!destination.trim() && !name.trim()) return
+    try {
+      const res = await fetch('/api/cotizador/package-photos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ destination, name }),
+      })
+      if (!res.ok) return
+      const data = await res.json() as { urls?: string[] }
+      if (data.urls?.length) setPackagePhotos(p => ({ ...p, [`pkg${idx}`]: data.urls! }))
+    } catch { /* ignore */ }
+  }
+
   async function fetchHotelPhoto(hotelName: string, location: string, idx: number) {
     if (!hotelName.trim()) return
     try {
@@ -976,6 +1004,27 @@ export default function CotizadorApp() {
     if (portMatch && typeof value === 'string' && value.trim()) {
       fetchPortPhoto(value, parseInt(portMatch[1]))
     }
+    // Auto-fetch package photos when destination or name changes
+    const pkgDestMatch = path.match(/^items\.(\d+)\.destination$/)
+    if (pkgDestMatch && typeof value === 'string' && value.trim()) {
+      const idx = parseInt(pkgDestMatch[1])
+      setQuote(q => {
+        const item = q.items[idx] as PackageItem
+        if (item?.type === 'package') fetchPackagePhotos(value, item.name || '', idx)
+        return q
+      })
+    }
+    const pkgNameMatch = path.match(/^items\.(\d+)\.name$/)
+    if (pkgNameMatch && typeof value === 'string') {
+      const idx = parseInt(pkgNameMatch[1])
+      setQuote(q => {
+        const item = q.items[idx] as PackageItem
+        if (item?.type === 'package' && (item.destination || value)) {
+          fetchPackagePhotos(item.destination || '', value, idx)
+        }
+        return q
+      })
+    }
   }
 
   function onAction(act: string, idx: number, seg?: number, itemType?: string) {
@@ -1067,7 +1116,7 @@ export default function CotizadorApp() {
   })
 
   const stcColor: Record<string, string> = { Pendiente: '#B08400', Enviada: '#1763B0', Aceptada: '#1F8A5B' }
-  const ITEM_LABELS: Record<string, string> = { flight: 'Vuelo', hotel: 'Hotel', cruise: 'Crucero', tour: 'Tour', transfer: 'Traslado', car: 'Carro', insurance: 'Seguro' }
+  const ITEM_LABELS: Record<string, string> = { flight: 'Vuelo', hotel: 'Hotel', cruise: 'Crucero', tour: 'Tour', transfer: 'Traslado', car: 'Carro', insurance: 'Seguro', package: 'Paquete' }
   const PAX_CODE: Record<string, string> = { Adulto: 'ADT', Niño: 'CHD', Jubilado: 'JUB', Infante: 'INF' }
 
   // ─── Styles ───────────────────────────────────────────────────────────────────
@@ -1430,7 +1479,7 @@ export default function CotizadorApp() {
           <div style={{ background: '#fff', border: '1px solid #EAEFF4', borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: '#0F3D7A', marginBottom: 12 }}>Productos</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 14 }}>
-              {['flight', 'hotel', 'cruise', 'tour', 'transfer', 'car'].map(t => (
+              {['flight', 'hotel', 'cruise', 'tour', 'transfer', 'car', 'package'].map(t => (
                 <button key={t} onClick={() => onAction('add', 0, undefined, t)} style={{ border: '1px solid #BFE6F2', background: '#EAF6FB', color: '#0F3D7A', fontWeight: 700, fontSize: 12, padding: '7px 11px', borderRadius: 8, cursor: 'pointer' }}>
                   + {ITEM_LABELS[t]}
                 </button>
@@ -1680,6 +1729,65 @@ export default function CotizadorApp() {
                         </div>
                         <label style={{ display: 'block' }}><span style={labelSt}>Destino</span><input value={ins.destination} onChange={e => onField('items.' + idx + '.destination', e.target.value)} placeholder="Europa, Worldwide, USA…" style={inputSt} /></label>
                         <label style={{ display: 'block', marginTop: 9 }}><span style={labelSt}>Coberturas incluidas</span><input value={ins.coverage} onChange={e => onField('items.' + idx + '.coverage', e.target.value)} placeholder="Médica, cancelación, equipaje, responsabilidad civil…" style={inputSt} /></label>
+                      </>
+                    )
+                  })()}
+
+                  {/* PACKAGE editor */}
+                  {item.type === 'package' && (() => {
+                    const pk = item as PackageItem
+                    const pkPhotos = packagePhotos[`pkg${idx}`] || []
+                    return (
+                      <>
+                        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 1fr', gap: 9, marginBottom: 9 }}>
+                          <label><span style={labelSt}>Nombre del paquete</span><input value={pk.name} onChange={e => onField('items.' + idx + '.name', e.target.value)} placeholder="Paquete Cancún Todo Incluido 7 noches" style={inputSt} /></label>
+                          <label><span style={labelSt}>Destino</span><input value={pk.destination} onChange={e => onField('items.' + idx + '.destination', e.target.value)} placeholder="Cancún, México" style={inputSt} /></label>
+                          <label><span style={labelSt}>Promoción</span><input value={pk.promotion} onChange={e => onField('items.' + idx + '.promotion', e.target.value)} placeholder="Early Bird ★" style={inputSt} /></label>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.2fr 1fr 1fr', gap: 9, marginBottom: 9 }}>
+                          <label><span style={labelSt}>Fecha de salida</span><input value={pk.startDate} onChange={e => onField('items.' + idx + '.startDate', e.target.value)} placeholder="Vie 21 ago 2026" style={inputSt} /></label>
+                          <label><span style={labelSt}>Fecha de regreso</span><input value={pk.endDate} onChange={e => onField('items.' + idx + '.endDate', e.target.value)} placeholder="Vie 28 ago 2026" style={inputSt} /></label>
+                          <label><span style={labelSt}>Duración</span><input value={pk.duration} onChange={e => onField('items.' + idx + '.duration', e.target.value)} placeholder="7 días / 6 noches" style={inputSt} /></label>
+                          <label><span style={labelSt}>Precio (USD)</span><input value={pk.price || ''} onChange={e => onField('items.' + idx + '.price', parseFloat(e.target.value) || 0)} type="number" placeholder="0.00" style={{ ...inputSt, fontWeight: 700, color: '#0F3D7A' }} /></label>
+                        </div>
+                        <label style={{ display: 'block', marginBottom: 9 }}><span style={labelSt}>Incluye</span><input value={pk.includes} onChange={e => onField('items.' + idx + '.includes', e.target.value)} placeholder="Vuelo redondo · Hotel todo incluido · Traslados · Seguro" style={inputSt} /></label>
+                        <label style={{ display: 'block', marginBottom: 9 }}><span style={labelSt}>Descripción</span><textarea value={pk.description} onChange={e => onField('items.' + idx + '.description', e.target.value)} placeholder="Descripción completa del paquete…" rows={3} style={{ ...inputSt, width: '100%', resize: 'vertical', boxSizing: 'border-box' }} /></label>
+                        {/* Photo grid */}
+                        <div style={{ fontSize: 11, color: '#8896A6', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>Fotos del paquete (hasta 6)</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 7 }}>
+                          {[0,1,2,3,4,5].map(pi => {
+                            const src = pkPhotos[pi]
+                            return (
+                              <label key={pi} style={{ display: 'block', cursor: 'pointer', position: 'relative' }}>
+                                <div style={{ height: 80, borderRadius: 8, border: '1.5px dashed #CFD9E3', background: src ? '#000' : '#F7FBFD', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  {src
+                                    ? <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.92 }} />
+                                    : <span style={{ fontSize: 10, color: '#9AA8B8' }}>Foto {pi + 1}</span>
+                                  }
+                                </div>
+                                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
+                                  const file = e.target.files?.[0]
+                                  if (!file) return
+                                  const reader = new FileReader()
+                                  reader.onload = ev => {
+                                    const url = ev.target?.result as string
+                                    setPackagePhotos(p => {
+                                      const cur = [...(p[`pkg${idx}`] || [])]
+                                      cur[pi] = url
+                                      return { ...p, [`pkg${idx}`]: cur }
+                                    })
+                                  }
+                                  reader.readAsDataURL(file)
+                                }} />
+                              </label>
+                            )
+                          })}
+                        </div>
+                        {pkPhotos.length === 0 && pk.destination && (
+                          <button onClick={() => fetchPackagePhotos(pk.destination, pk.name, idx)} style={{ marginTop: 8, border: '1px solid #BFE6F2', background: '#EAF6FB', color: '#0F3D7A', fontWeight: 700, fontSize: 12, padding: '6px 12px', borderRadius: 8, cursor: 'pointer' }}>
+                            🔍 Buscar fotos de {pk.destination}
+                          </button>
+                        )}
                       </>
                     )
                   })()}
@@ -2130,6 +2238,65 @@ export default function CotizadorApp() {
                               {ins.days && <div><div style={{ fontSize: 10, color: '#9AA8B8' }}>DÍAS</div><div style={{ fontSize: 12, fontWeight: 600, color: '#15293F' }}>{ins.days} días</div></div>}
                               {ins.coverage && <div style={{ gridColumn: 'span 3' }}><div style={{ fontSize: 10, color: '#9AA8B8' }}>COBERTURAS</div><div style={{ fontSize: 12, fontWeight: 600, color: '#15293F' }}>{ins.coverage}</div></div>}
                             </div>
+                          </div>
+                        </>
+                      )
+                    })()}
+
+                    {/* PACKAGE doc */}
+                    {item.type === 'package' && (() => {
+                      const pk = item as PackageItem
+                      const pkPhotos = (packagePhotos[`pkg${idx}`] || []).filter(Boolean)
+                      return (
+                        <>
+                          {/* Header */}
+                          <div style={{ marginBottom: 13, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                            <div style={{ background: 'linear-gradient(135deg, #E05C2A 0%, #C0392B 100%)', color: '#fff', fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.12em', padding: '7px 14px', borderRadius: 6 }}>
+                              🌍 PAQUETE{pk.destination ? ' · ' + pk.destination.toUpperCase() : ''}
+                            </div>
+                            {pk.promotion && <div style={{ background: '#FFF3CD', color: '#856404', fontFamily: 'Archivo, sans-serif', fontSize: 11, fontWeight: 700, padding: '5px 10px', borderRadius: 6 }}>🏷️ {pk.promotion}</div>}
+                          </div>
+
+                          <div style={{ border: '1px solid #E6EDF3', borderRadius: 12, overflow: 'hidden' }}>
+                            {/* Package name + duration */}
+                            <div style={{ background: 'linear-gradient(135deg, #FFF5F0 0%, #FFF8F5 100%)', padding: '14px 18px', borderBottom: '1px solid #F0D8D0' }}>
+                              {pk.name && <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 18, fontWeight: 800, color: '#C0392B', marginBottom: 4 }}>{pk.name}</div>}
+                              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                                {pk.startDate && <div style={{ fontSize: 13, color: '#15293F' }}>✈️ <strong>{pk.startDate}</strong>{pk.endDate ? ` → ${pk.endDate}` : ''}</div>}
+                                {pk.duration && <div style={{ fontSize: 13, color: '#5B7186' }}>🗓 {pk.duration}</div>}
+                              </div>
+                            </div>
+
+                            {/* Photo gallery */}
+                            {pkPhotos.length > 0 && (
+                              <div style={{ display: 'grid', gridTemplateColumns: pkPhotos.length === 1 ? '1fr' : pkPhotos.length === 2 ? '1fr 1fr' : 'repeat(3, 1fr)', gap: 3, maxHeight: 220, overflow: 'hidden' }}>
+                                {pkPhotos.slice(0, 6).map((url, pi) => (
+                                  <div key={pi} style={{ position: 'relative', paddingBottom: pkPhotos.length <= 3 ? '55%' : '70%', overflow: 'hidden' }}>
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Includes */}
+                            {pk.includes && (
+                              <div style={{ padding: '12px 18px', borderTop: pkPhotos.length > 0 ? '1px solid #F0D8D0' : undefined, background: '#FFFAF8' }}>
+                                <div style={{ fontSize: 10, color: '#C0392B', fontWeight: 800, letterSpacing: '.08em', marginBottom: 5 }}>✅ INCLUYE</div>
+                                <div style={{ fontSize: 13, color: '#15293F', lineHeight: 1.6 }}>
+                                  {pk.includes.split('·').map((inc, i) => inc.trim() ? (
+                                    <span key={i} style={{ display: 'inline-block', marginRight: 14 }}>✔ {inc.trim()}</span>
+                                  ) : null)}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Description */}
+                            {pk.description && (
+                              <div style={{ padding: '12px 18px', borderTop: '1px solid #F0D8D0' }}>
+                                <div style={{ fontSize: 12, color: '#5B7186', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{pk.description}</div>
+                              </div>
+                            )}
                           </div>
                         </>
                       )

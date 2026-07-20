@@ -23,6 +23,7 @@ HOTEL: {"type":"hotel","name":"","stars":0,"location":"","address":"","checkIn":
 CRUCERO: {"type":"cruise","line":"","ship":"","route":"","depart":"","nights":"","cabin":"","cabinLabel":"","boardingTime":"","ports":[],"promotion":"","price":0}
 TOUR: {"type":"tour","name":"","location":"","date":"","duration":"","includes":"","price":0}
 TRASLADO: {"type":"transfer","from":"","to":"","date":"","vehicle":"","mode":"Privado","price":0}
+PAQUETE: {"type":"package","name":"","destination":"","startDate":"","endDate":"","duration":"","includes":"","description":"","promotion":"","price":0}
 CARRO: {"type":"car","company":"","category":"","model":"","pickupLocation":"","pickupCode":"","pickupAddress":"","pickupDate":"","pickupTime":"","dropoffLocation":"","returnCode":"","returnAddress":"","returnDate":"","returnTime":"","days":"","passengers":"5","bags":"2","doors":"4","ac":"Sí","transmission":"Automático","protection":"","promotion":"","price":0}
 
 Reglas:

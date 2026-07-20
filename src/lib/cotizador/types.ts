@@ -115,6 +115,19 @@ export interface CarItem {
   price: number
 }
 
+export interface PackageItem {
+  type: 'package'
+  name: string
+  destination: string
+  startDate: string
+  endDate: string
+  duration: string
+  includes: string
+  description: string
+  promotion: string
+  price: number
+}
+
 export interface InsuranceItem {
   type: 'insurance'
   company: string
@@ -127,7 +140,7 @@ export interface InsuranceItem {
   price: number
 }
 
-export type QuoteItem = FlightItem | HotelItem | CruiseItem | TourItem | TransferItem | CarItem | InsuranceItem
+export type QuoteItem = FlightItem | HotelItem | CruiseItem | TourItem | TransferItem | CarItem | InsuranceItem | PackageItem
 
 export interface Pax {
   name: string
