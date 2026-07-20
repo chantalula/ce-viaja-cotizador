@@ -2054,17 +2054,27 @@ export default function CotizadorApp() {
 
                             {/* Pickup / Return */}
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1px solid #EDF1F5' }}>
-                              <div style={{ padding: '12px 16px', borderRight: '1px solid #EDF1F5' }}>
-                                <div style={{ fontSize: 10, color: '#16A99C', fontWeight: 700, letterSpacing: '.08em', marginBottom: 4 }}>📍 RECOGIDA</div>
-                                {ca.pickupDate && <div style={{ fontSize: 12, color: '#5B7186' }}>{ca.pickupDate}</div>}
-                                {ca.pickupTime && <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 22, fontWeight: 800, color: '#15293F', lineHeight: 1.1 }}>{ca.pickupTime}</div>}
-                                {ca.pickupLocation && <div style={{ fontSize: 11, color: '#5B7186', marginTop: 3 }}>{ca.pickupLocation}{ca.pickupCode ? <span style={{ marginLeft: 5, background: '#EEF3FB', color: '#0F3D7A', fontWeight: 800, fontSize: 11, padding: '1px 6px', borderRadius: 4 }}>{ca.pickupCode}</span> : ''}</div>}
+                              <div style={{ padding: '14px 18px', borderRight: '1px solid #EDF1F5' }}>
+                                <div style={{ fontSize: 10, color: '#16A99C', fontWeight: 700, letterSpacing: '.08em', marginBottom: 6 }}>📍 RECOGIDA</div>
+                                {ca.pickupDate && <div style={{ fontSize: 15, fontWeight: 700, color: '#15293F', marginBottom: 2 }}>{ca.pickupDate}</div>}
+                                {ca.pickupTime && <div style={{ fontSize: 28, fontWeight: 800, color: '#15293F', lineHeight: 1, marginBottom: 6 }}>{ca.pickupTime}</div>}
+                                {ca.pickupLocation && (
+                                  <div style={{ fontSize: 12, color: '#5B7186', lineHeight: 1.4 }}>
+                                    {ca.pickupLocation}
+                                    {ca.pickupCode && <span style={{ display: 'inline-block', marginLeft: 6, background: '#EEF3FB', color: '#0F3D7A', fontWeight: 800, fontSize: 12, padding: '2px 7px', borderRadius: 5 }}>{ca.pickupCode}</span>}
+                                  </div>
+                                )}
                               </div>
-                              <div style={{ padding: '12px 16px' }}>
-                                <div style={{ fontSize: 10, color: '#E0483E', fontWeight: 700, letterSpacing: '.08em', marginBottom: 4 }}>🏁 DEVOLUCIÓN</div>
-                                {ca.returnDate && <div style={{ fontSize: 12, color: '#5B7186' }}>{ca.returnDate}</div>}
-                                {ca.returnTime && <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 22, fontWeight: 800, color: '#15293F', lineHeight: 1.1 }}>{ca.returnTime}</div>}
-                                {ca.dropoffLocation && <div style={{ fontSize: 11, color: '#5B7186', marginTop: 3 }}>{ca.dropoffLocation}{ca.returnCode ? <span style={{ marginLeft: 5, background: '#EEF3FB', color: '#0F3D7A', fontWeight: 800, fontSize: 11, padding: '1px 6px', borderRadius: 4 }}>{ca.returnCode}</span> : ''}</div>}
+                              <div style={{ padding: '14px 18px' }}>
+                                <div style={{ fontSize: 10, color: '#E0483E', fontWeight: 700, letterSpacing: '.08em', marginBottom: 6 }}>🏁 DEVOLUCIÓN</div>
+                                {ca.returnDate && <div style={{ fontSize: 15, fontWeight: 700, color: '#15293F', marginBottom: 2 }}>{ca.returnDate}</div>}
+                                {ca.returnTime && <div style={{ fontSize: 28, fontWeight: 800, color: '#15293F', lineHeight: 1, marginBottom: 6 }}>{ca.returnTime}</div>}
+                                {ca.dropoffLocation && (
+                                  <div style={{ fontSize: 12, color: '#5B7186', lineHeight: 1.4 }}>
+                                    {ca.dropoffLocation}
+                                    {ca.returnCode && <span style={{ display: 'inline-block', marginLeft: 6, background: '#EEF3FB', color: '#0F3D7A', fontWeight: 800, fontSize: 12, padding: '2px 7px', borderRadius: 5 }}>{ca.returnCode}</span>}
+                                  </div>
+                                )}
                               </div>
                             </div>
 
