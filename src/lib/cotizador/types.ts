@@ -84,7 +84,10 @@ export interface TransferItem {
   from: string
   to: string
   date: string
+  pickupTime: string
   vehicle: string
+  passengers: string
+  description: string
   mode: string
   price: number
 }

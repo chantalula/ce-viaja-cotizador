@@ -56,7 +56,7 @@ function newItem(type: string): QuoteItem {
   if (type === 'car') return { type: 'car', company: '', category: '', model: '', pickupLocation: '', pickupCode: '', pickupAddress: '', pickupDate: '', pickupTime: '', dropoffLocation: '', returnCode: '', returnAddress: '', returnDate: '', returnTime: '', days: '', passengers: '5', bags: '2', doors: '4', ac: 'Sí', transmission: 'Automático', protection: 'Protección Total', promotion: '', price: 0 }
   if (type === 'insurance') return { type: 'insurance', company: '', plan: '', destination: '', startDate: '', endDate: '', days: '', coverage: '', price: 0 }
   if (type === 'package') return { type: 'package', name: '', destination: '', startDate: '', endDate: '', duration: '', includes: '', description: '', promotion: '', price: 0 }
-  return { type: 'transfer', from: '', to: '', date: '', vehicle: '', mode: 'Privado', price: 0 }
+  return { type: 'transfer', from: '', to: '', date: '', pickupTime: '', vehicle: '', passengers: '', description: '', mode: 'Privado', price: 0 }
 }
 
 function seed(): QuoteDoc {
@@ -158,7 +158,7 @@ function normalizeItem(it: Record<string, unknown>): QuoteItem | null {
   if (it.type === 'hotel') return { type: 'hotel', name: (it.name as string) || 'Hotel', stars: Number(it.stars) || 0, location: (it.location as string) || '', address: (it.address as string) || '', checkIn: (it.checkIn as string) || '', checkOut: (it.checkOut as string) || '', nights: (it.nights as string) || '', roomType: (it.roomType as string) || '', board: (it.board as string) || '', cancellation: (it.cancellation as string) || '', price: parsePrice(it.price) }
   if (it.type === 'cruise') return { type: 'cruise', line: (it.line as string) || '', ship: (it.ship as string) || '', route: (it.route as string) || '', depart: (it.depart as string) || '', nights: (it.nights as string) || '', cabin: (it.cabin as string) || '', cabinLabel: (it.cabinLabel as string) || '', boardingTime: (it.boardingTime as string) || '', ports: ((it.ports as unknown[]) || []).map((p) => ({ date: (p as Record<string,string>).date || '', port: (p as Record<string,string>).port || '', arr: (p as Record<string,string>).arr || '', dep: (p as Record<string,string>).dep || '' })), promotion: (it.promotion as string) || '', price: parsePrice(it.price) }
   if (it.type === 'tour') return { type: 'tour', name: (it.name as string) || 'Tour', location: (it.location as string) || '', date: (it.date as string) || '', duration: (it.duration as string) || '', includes: (it.includes as string) || '', price: parsePrice(it.price) }
-  if (it.type === 'transfer') return { type: 'transfer', from: (it.from as string) || '', to: (it.to as string) || '', date: (it.date as string) || '', vehicle: (it.vehicle as string) || '', mode: (it.mode as string) || 'Privado', price: parsePrice(it.price) }
+  if (it.type === 'transfer') return { type: 'transfer', from: (it.from as string) || '', to: (it.to as string) || '', date: (it.date as string) || '', pickupTime: (it.pickupTime as string) || '', vehicle: (it.vehicle as string) || '', passengers: (it.passengers as string) || '', description: (it.description as string) || '', mode: (it.mode as string) || 'Privado', price: parsePrice(it.price) }
   if (it.type === 'car') return { type: 'car', company: (it.company as string) || '', category: (it.category as string) || '', model: (it.model as string) || '', pickupLocation: (it.pickupLocation as string) || '', pickupCode: (it.pickupCode as string) || '', pickupAddress: (it.pickupAddress as string) || '', pickupDate: (it.pickupDate as string) || '', pickupTime: (it.pickupTime as string) || '', dropoffLocation: (it.dropoffLocation as string) || '', returnCode: (it.returnCode as string) || '', returnAddress: (it.returnAddress as string) || '', returnDate: (it.returnDate as string) || '', returnTime: (it.returnTime as string) || '', days: (it.days as string) || '', passengers: (it.passengers as string) || '5', bags: (it.bags as string) || '2', doors: (it.doors as string) || '4', ac: (it.ac as string) || 'Sí', transmission: (it.transmission as string) || 'Automático', protection: (it.protection as string) || '', promotion: (it.promotion as string) || '', price: parsePrice(it.price) }
   if (it.type === 'insurance') return { type: 'insurance', company: (it.company as string) || '', plan: (it.plan as string) || '', destination: (it.destination as string) || '', startDate: (it.startDate as string) || '', endDate: (it.endDate as string) || '', days: (it.days as string) || '', coverage: (it.coverage as string) || '', price: parsePrice(it.price) }
   if (it.type === 'package') return { type: 'package', name: (it.name as string) || '', destination: (it.destination as string) || '', startDate: (it.startDate as string) || '', endDate: (it.endDate as string) || '', duration: (it.duration as string) || '', includes: (it.includes as string) || '', description: (it.description as string) || '', promotion: (it.promotion as string) || '', price: parsePrice(it.price) }
@@ -268,6 +268,7 @@ export default function CotizadorApp() {
   const [hotelPhotos, setHotelPhotos] = useState<Record<string, string>>({})
   const [carPhotos, setCarPhotos] = useState<Record<string, string>>({})
   const [packagePhotos, setPackagePhotos] = useState<Record<string, string[]>>({})
+  const [transferPhotos, setTransferPhotos] = useState<Record<string, string>>({})
   const [cruisePhotos, setCruisePhotos] = useState<Record<string, string>>({})
   // keys: `${idx}-ext` (ship exterior) and `${idx}-cabin` (cabin interior)
   const [shipAutoPhoto, setShipAutoPhoto] = useState<Record<string, string>>({})
@@ -336,6 +337,10 @@ export default function CotizadorApp() {
           fetchPackagePhotos(pk.destination, pk.name, idx)
         }
       }
+      if (item.type === 'transfer') {
+        const tr = item as TransferItem
+        if (!transferPhotos[`tr${idx}-photo`] && tr.vehicle) fetchTransferPhoto(tr.vehicle, idx)
+      }
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quote.items])
@@ -401,12 +406,12 @@ export default function CotizadorApp() {
       fresh.number = fmtNum(data.value)
       fresh.sellerIndex = quote.sellerIndex
       setQuote(fresh)
-      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({})
+      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({}); setTransferPhotos({})
     } catch {
       const fresh = seed()
       fresh.sellerIndex = quote.sellerIndex
       setQuote(fresh)
-      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({})
+      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({}); setTransferPhotos({})
     }
   }
 
@@ -453,7 +458,7 @@ export default function CotizadorApp() {
     const r = savedQuotes.find(x => x.id === id)
     if (r) {
       setQuote(JSON.parse(JSON.stringify(r.quote)))
-      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({})
+      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({}); setTransferPhotos({})
       setShowDB(false)
     }
   }
@@ -462,7 +467,7 @@ export default function CotizadorApp() {
     const r = savedQuotes.find(x => x.id === id)
     if (!r) return
     setQuote(JSON.parse(JSON.stringify(r.quote)))
-    setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({})
+    setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({}); setTransferPhotos({})
     setShowDB(false)
     // Wait one frame for the doc to render, then generate PDF
     await new Promise(res => setTimeout(res, 600))
@@ -478,7 +483,7 @@ export default function CotizadorApp() {
       const q: QuoteDoc = JSON.parse(JSON.stringify(r.quote))
       q.number = fmtNum(data.value)
       setQuote(q)
-      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({})
+      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({}); setTransferPhotos({})
       setShowDB(false)
       showToast('Cotización duplicada')
     } catch {
@@ -706,6 +711,10 @@ export default function CotizadorApp() {
             const pk = item as PackageItem
             if (pk.destination || pk.name) fetchPackagePhotos(pk.destination, pk.name, idx)
           }
+          if (item.type === 'transfer') {
+            const tr = item as TransferItem
+            if (tr.vehicle) fetchTransferPhoto(tr.vehicle, idx)
+          }
         })
         return updated
       })
@@ -858,6 +867,20 @@ export default function CotizadorApp() {
     } catch { /* ignore */ }
   }
 
+  async function fetchTransferPhoto(vehicle: string, idx: number) {
+    if (!vehicle.trim()) return
+    try {
+      const res = await fetch('/api/cotizador/transfer-photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vehicle }),
+      })
+      if (!res.ok) return
+      const data = await res.json() as { url?: string }
+      if (data.url) setTransferPhotos(p => ({ ...p, [`tr${idx}-photo`]: data.url! }))
+    } catch { /* ignore */ }
+  }
+
   async function fetchPackagePhotos(destination: string, name: string, idx: number) {
     if (!destination.trim() && !name.trim()) return
     try {
@@ -1003,6 +1026,15 @@ export default function CotizadorApp() {
     const portMatch = path.match(/^items\.(\d+)\.ports\.0\.port$/)
     if (portMatch && typeof value === 'string' && value.trim()) {
       fetchPortPhoto(value, parseInt(portMatch[1]))
+    }
+    // Auto-fetch transfer photo when vehicle type changes
+    const trVehicleMatch = path.match(/^items\.(\d+)\.vehicle$/)
+    if (trVehicleMatch && typeof value === 'string' && value.trim()) {
+      const idx = parseInt(trVehicleMatch[1])
+      setQuote(q => {
+        if ((q.items[idx] as TransferItem)?.type === 'transfer') fetchTransferPhoto(value, idx)
+        return q
+      })
     }
     // Auto-fetch package photos when destination or name changes
     const pkgDestMatch = path.match(/^items\.(\d+)\.destination$/)
@@ -1798,12 +1830,14 @@ export default function CotizadorApp() {
                     return (
                       <>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9, marginBottom: 9 }}>
-                          <label><span style={labelSt}>Desde</span><input value={tr.from} onChange={e => onField('items.' + idx + '.from', e.target.value)} placeholder="Aeropuerto MAD" style={inputSt} /></label>
-                          <label><span style={labelSt}>Hasta</span><input value={tr.to} onChange={e => onField('items.' + idx + '.to', e.target.value)} placeholder="Hotel centro" style={inputSt} /></label>
+                          <label><span style={labelSt}>Desde</span><input value={tr.from} onChange={e => onField('items.' + idx + '.from', e.target.value)} placeholder="Aeropuerto PTY" style={inputSt} /></label>
+                          <label><span style={labelSt}>Hasta</span><input value={tr.to} onChange={e => onField('items.' + idx + '.to', e.target.value)} placeholder="Hotel Gran Melia" style={inputSt} /></label>
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 9 }}>
-                          <label><span style={labelSt}>Fecha</span><input value={tr.date} onChange={e => onField('items.' + idx + '.date', e.target.value)} style={inputSt} /></label>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr 1.2fr 0.6fr 0.6fr 0.9fr', gap: 9, marginBottom: 9 }}>
+                          <label><span style={labelSt}>Fecha</span><input value={tr.date} onChange={e => onField('items.' + idx + '.date', e.target.value)} placeholder="Lun 21 jul" style={inputSt} /></label>
+                          <label><span style={labelSt}>Hora recogida</span><input value={tr.pickupTime} onChange={e => onField('items.' + idx + '.pickupTime', e.target.value)} placeholder="14:30" style={inputSt} /></label>
                           <label><span style={labelSt}>Vehículo</span><input value={tr.vehicle} onChange={e => onField('items.' + idx + '.vehicle', e.target.value)} placeholder="Van privada" style={inputSt} /></label>
+                          <label><span style={labelSt}>Pasajeros</span><input value={tr.passengers} onChange={e => onField('items.' + idx + '.passengers', e.target.value)} placeholder="4" style={inputSt} /></label>
                           <label><span style={labelSt}>Tipo</span>
                             <select value={tr.mode} onChange={e => onField('items.' + idx + '.mode', e.target.value)} style={{ width: '100%', border: '1px solid #D8E0E8', borderRadius: 8, padding: '7px 5px', fontSize: 13, color: '#15293F', background: '#fff', outline: 'none' }}>
                               <option>Privado</option><option>Compartido</option>
@@ -1811,6 +1845,7 @@ export default function CotizadorApp() {
                           </label>
                           <label><span style={labelSt}>Precio (USD)</span><input value={tr.price || ''} onChange={e => onField('items.' + idx + '.price', parseFloat(e.target.value) || 0)} type="number" placeholder="0.00" style={{ ...inputSt, fontWeight: 700, color: '#0F3D7A' }} /></label>
                         </div>
+                        <label style={{ display: 'block' }}><span style={labelSt}>Descripción del vehículo</span><input value={tr.description} onChange={e => onField('items.' + idx + '.description', e.target.value)} placeholder="Van blanca Mercedes Sprinter, A/C, chofer uniformado — encuentro en salida de Aduana" style={inputSt} /></label>
                       </>
                     )
                   })()}
@@ -2305,16 +2340,46 @@ export default function CotizadorApp() {
                     {/* TRANSFER doc */}
                     {item.type === 'transfer' && (() => {
                       const tr = item as TransferItem
+                      const trPhoto = transferPhotos[`tr${idx}-photo`]
                       return (
                         <>
                           <div style={{ marginBottom: 13 }}>
-                            <div style={{ background: '#0F3D7A', color: '#fff', fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.12em', padding: '7px 14px', borderRadius: 6, display: 'inline-block' }}>TRASLADO {tr.mode}</div>
+                            <div style={{ background: '#0F3D7A', color: '#fff', fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.12em', padding: '7px 14px', borderRadius: 6, display: 'inline-block' }}>🚐 TRASLADO {tr.mode}</div>
                           </div>
-                          <div style={{ border: '1px solid #E6EDF3', borderRadius: 10, padding: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <div><div style={{ fontSize: 11, color: '#9AA8B8' }}>RECORRIDO</div><div style={{ fontSize: 14, fontWeight: 600, color: '#15293F' }}>{tr.from} → {tr.to}</div></div>
-                            <div style={{ textAlign: 'right' }}>
-                              <div style={{ fontSize: 11, color: '#9AA8B8' }}>{tr.date}</div>
-                              <div style={{ fontSize: 13, fontWeight: 600, color: '#16A99C' }}>{tr.vehicle}</div>
+                          <div style={{ border: '1px solid #E6EDF3', borderRadius: 12, overflow: 'hidden' }}>
+                            {/* Route + time row */}
+                            <div style={{ padding: '14px 18px', borderBottom: '1px solid #EDF1F5', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontSize: 10, color: '#9AA8B8', letterSpacing: '.08em', marginBottom: 4 }}>RECORRIDO</div>
+                                <div style={{ fontSize: 15, fontWeight: 700, color: '#15293F' }}>{tr.from} → {tr.to}</div>
+                                {tr.date && <div style={{ fontSize: 12, color: '#5B7186', marginTop: 3 }}>{tr.date}</div>}
+                              </div>
+                              {tr.pickupTime && (
+                                <div style={{ textAlign: 'center', background: '#EEF3FB', borderRadius: 10, padding: '10px 18px', flexShrink: 0 }}>
+                                  <div style={{ fontSize: 10, color: '#5B7186', letterSpacing: '.06em', marginBottom: 2 }}>RECOGIDA</div>
+                                  <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 28, fontWeight: 800, color: '#0F3D7A', lineHeight: 1 }}>{tr.pickupTime}</div>
+                                </div>
+                              )}
+                            </div>
+                            {/* Photo + vehicle info */}
+                            <div style={{ display: 'flex', alignItems: 'stretch' }}>
+                              {trPhoto && (
+                                <div style={{ width: 160, flexShrink: 0, overflow: 'hidden' }}>
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img src={trPhoto} alt={tr.vehicle} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                </div>
+                              )}
+                              <div style={{ flex: 1, padding: '14px 18px' }}>
+                                {tr.vehicle && <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 15, fontWeight: 800, color: '#0F3D7A', marginBottom: 4 }}>{tr.vehicle}</div>}
+                                {tr.passengers && <div style={{ fontSize: 12, color: '#5B7186', marginBottom: 6 }}>👤 Capacidad: {tr.passengers} {Number(tr.passengers) === 1 ? 'pasajero' : 'pasajeros'}</div>}
+                                {tr.description && <div style={{ fontSize: 12, color: '#5B7186', lineHeight: 1.5 }}>{tr.description}</div>}
+                              </div>
+                              {/* Photo slot for manual upload if no auto photo */}
+                              {!trPhoto && (
+                                <div style={{ width: 130, flexShrink: 0, borderLeft: '1px solid #EDF1F5' }}>
+                                  <ImageSlot id={`tr${idx}-photo`} placeholder="Foto vehículo" photos={transferPhotos} onChange={(id, src) => setTransferPhotos(p => ({ ...p, [id]: src }))} objectFit="cover" />
+                                </div>
+                              )}
                             </div>
                           </div>
                         </>
