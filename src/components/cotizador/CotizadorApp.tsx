@@ -2143,6 +2143,14 @@ export default function CotizadorApp() {
                     })()}
                   </div>
                 ))}
+
+                {/* Comments — below all items */}
+                {quote.comments?.trim() && (
+                  <div style={{ marginTop: 18, border: '1px solid #E6EDF3', borderRadius: 12, padding: '16px 20px', background: '#FAFBFD' }}>
+                    <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.12em', color: '#0F3D7A', fontWeight: 800, marginBottom: 8 }}>Comentarios</div>
+                    <div style={{ fontSize: 13, color: '#5B7186', lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>{quote.comments}</div>
+                  </div>
+                )}
               </div>
 
               {/* Sidebar */}
@@ -2153,15 +2161,6 @@ export default function CotizadorApp() {
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#5B7186' }}>Clase</span><span style={{ fontWeight: 700 }}>{cabinSummary}</span></div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: '#5B7186' }}>Vigencia</span><span style={{ fontWeight: 700 }}>{quote.validez}</span></div>
                 </div>
-
-                {/* Comments */}
-                {quote.comments?.trim() && (
-                  <>
-                    <div style={{ height: 1, background: '#EDF1F5', margin: '18px 0' }} />
-                    <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.12em', color: '#0F3D7A', fontWeight: 800, marginBottom: 8 }}>Comentarios</div>
-                    <div style={{ fontSize: 12, color: '#5B7186', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{quote.comments}</div>
-                  </>
-                )}
 
                 {/* Per-type price breakdown */}
                 {(quote.priceAdulto > 0 || quote.priceNino > 0 || quote.priceJubilado > 0) && (
