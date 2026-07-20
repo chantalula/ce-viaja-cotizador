@@ -771,6 +771,46 @@ export default function CotizadorApp() {
         }
       }
 
+      // Transfer photo: try to crop vehicle image from document, else Pexels already running
+      const trIdx = newItems.findIndex(it => it.type === 'transfer')
+      if (trIdx >= 0) {
+        const imageFile = importFiles.find(f => f.type.startsWith('image/'))
+        if (imageFile) {
+          const reader = new FileReader()
+          reader.onload = async (e) => {
+            const dataUrl = e.target?.result as string
+            if (!dataUrl) return
+            const base64 = dataUrl.split(',')[1]
+            try {
+              const bboxRes = await fetch('/api/cotizador/extract-car-photo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: base64, mimeType: imageFile.type }),
+              })
+              const bbox = await bboxRes.json() as { found: boolean; x: number; y: number; w: number; h: number }
+              if (!bbox.found) return // Pexels fallback already running from forEach
+              const img = new window.Image()
+              img.onload = () => {
+                const canvas = document.createElement('canvas')
+                const cropX = Math.floor(bbox.x * img.naturalWidth)
+                const cropY = Math.floor(bbox.y * img.naturalHeight)
+                const cropW = Math.floor(bbox.w * img.naturalWidth)
+                const cropH = Math.floor(bbox.h * img.naturalHeight)
+                canvas.width = cropW
+                canvas.height = cropH
+                const ctx = canvas.getContext('2d')
+                if (ctx) {
+                  ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH)
+                  setTransferPhotos(p => ({ ...p, [`tr${trIdx}-photo`]: canvas.toDataURL('image/jpeg', 0.92) }))
+                }
+              }
+              img.src = dataUrl
+            } catch { /* Pexels fallback already running */ }
+          }
+          reader.readAsDataURL(imageFile)
+        }
+      }
+
       setImportBusy(false)
       setShowImport(false)
       setImportText('')
