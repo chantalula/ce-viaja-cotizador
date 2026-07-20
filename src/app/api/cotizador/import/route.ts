@@ -9,6 +9,7 @@ const SYSTEM_PROMPT = `Eres asistente de una agencia de viajes. Los archivos pue
 ⚠️ REGLA FUNDAMENTAL — ITINERARIOS COMPLETOS: Si el documento es un itinerario de paquete o viaje completo con múltiples servicios, debes extraer CADA servicio como su propio item separado en el array "items". NO hay límite de items — extrae TODO lo que encuentres: cada vuelo, cada hotel, cada traslado, cada tour, cada actividad, cada renta de carro. NUNCA colapses múltiples servicios en un solo item PAQUETE cuando tengas los detalles individuales disponibles.
 
 Esquemas de items:
+DÍA: {"type":"day","number":1,"date":"Mar 15 jul 2025","title":"Llegada a Cancún"}
 VUELO: {"type":"flight","dir":"Ida","date":"Jue 21 may 2026","price":0,"baggage":"","segments":[{"airline":"","flightNo":"","alliance":"—","from":"","fromCity":"","dep":"","to":"","toCity":"","arr":"","plus":"","duration":"","aircraft":"","cabin":"Económica","connectionAfter":""}]}
 HOTEL: {"type":"hotel","name":"","stars":0,"location":"","address":"","checkIn":"","checkOut":"","nights":"","roomType":"","board":"","cancellation":"","price":0}
 CRUCERO: {"type":"cruise","line":"","ship":"","route":"","depart":"","nights":"","cabin":"","cabinLabel":"","boardingTime":"","ports":[{"date":"","port":"","arr":"","dep":""}],"promotion":"","price":0}
@@ -18,6 +19,7 @@ CARRO: {"type":"car","company":"","category":"","model":"","pickupLocation":"","
 PAQUETE: {"type":"package","name":"","destination":"","startDate":"","endDate":"","duration":"","includes":"","description":"","promotion":"","price":0}
 
 Reglas por tipo:
+- DÍA: Para itinerarios organizados por días, inserta un item DÍA antes de cada grupo de actividades del mismo día. "number"=número del día en el itinerario (1, 2, 3…), "date"=fecha del día en español corto (ej: "Mar 15 jul 2025"), "title"=descripción corta del día (ej: "Llegada a Cancún", "Día libre en París", "Excursión a Chichen Itzá", "Regreso"). Esto es OBLIGATORIO para documentos de paquetes o itinerarios multi-día: cada día debe tener su encabezado DÍA seguido de todos sus servicios (vuelos, traslados, hotel, tours, etc.).
 - PASAPORTE: llena "client", "clientPassport" y agrega a "pax". No inventes vuelos.
 - "client": nombre del titular o grupo. NUNCA el código de reservación.
 - DOCUMENTOS CE VIAJA: secciones "OTROS" o "NOTAS" al final con despedidas ("GRACIAS", "FELIZ VIAJE", etc.) — IGNÓRALAS. "PREPARADO PARA" = nombre del cliente (va en "client"), no es pasajero.

@@ -15,6 +15,7 @@ import type {
   CarItem,
   InsuranceItem,
   PackageItem,
+  DayItem,
   QuoteDoc,
   QuoteItem,
   SavedQuote,
@@ -56,6 +57,7 @@ function newItem(type: string): QuoteItem {
   if (type === 'car') return { type: 'car', company: '', category: '', model: '', pickupLocation: '', pickupCode: '', pickupAddress: '', pickupDate: '', pickupTime: '', dropoffLocation: '', returnCode: '', returnAddress: '', returnDate: '', returnTime: '', days: '', passengers: '5', bags: '2', doors: '4', ac: 'Sí', transmission: 'Automático', protection: 'Protección Total', promotion: '', price: 0 }
   if (type === 'insurance') return { type: 'insurance', company: '', plan: '', destination: '', startDate: '', endDate: '', days: '', coverage: '', price: 0 }
   if (type === 'package') return { type: 'package', name: '', destination: '', startDate: '', endDate: '', duration: '', includes: '', description: '', promotion: '', price: 0 }
+  if (type === 'day') return { type: 'day', number: 1, date: '', title: '' }
   return { type: 'transfer', from: '', to: '', date: '', pickupTime: '', vehicle: '', passengers: '', description: '', mode: 'Privado', price: 0 }
 }
 
@@ -96,10 +98,10 @@ function totalOf(q: QuoteDoc) {
 }
 
 function productSummary(q: QuoteDoc) {
-  const L: Record<string, string> = { flight: 'Vuelo', hotel: 'Hotel', cruise: 'Crucero', tour: 'Tour', transfer: 'Traslado', car: 'Carro', insurance: 'Seguro' }
+  const L: Record<string, string> = { flight: 'Vuelo', hotel: 'Hotel', cruise: 'Crucero', tour: 'Tour', transfer: 'Traslado', car: 'Carro', insurance: 'Seguro', package: 'Paquete' }
   const c: Record<string, number> = {}
-  ;(q.items || []).forEach(it => { c[it.type] = (c[it.type] || 0) + 1 })
-  return Object.keys(c).map(k => c[k] + '× ' + L[k]).join(' · ') || '—'
+  ;(q.items || []).forEach(it => { if (it.type !== 'day') c[it.type] = (c[it.type] || 0) + 1 })
+  return Object.keys(c).filter(k => L[k]).map(k => c[k] + '× ' + L[k]).join(' · ') || '—'
 }
 
 function parseDurMin(s: string): number {
@@ -162,6 +164,7 @@ function normalizeItem(it: Record<string, unknown>): QuoteItem | null {
   if (it.type === 'car') return { type: 'car', company: (it.company as string) || '', category: (it.category as string) || '', model: (it.model as string) || '', pickupLocation: (it.pickupLocation as string) || '', pickupCode: (it.pickupCode as string) || '', pickupAddress: (it.pickupAddress as string) || '', pickupDate: (it.pickupDate as string) || '', pickupTime: (it.pickupTime as string) || '', dropoffLocation: (it.dropoffLocation as string) || '', returnCode: (it.returnCode as string) || '', returnAddress: (it.returnAddress as string) || '', returnDate: (it.returnDate as string) || '', returnTime: (it.returnTime as string) || '', days: (it.days as string) || '', passengers: (it.passengers as string) || '5', bags: (it.bags as string) || '2', doors: (it.doors as string) || '4', ac: (it.ac as string) || 'Sí', transmission: (it.transmission as string) || 'Automático', protection: (it.protection as string) || '', promotion: (it.promotion as string) || '', price: parsePrice(it.price) }
   if (it.type === 'insurance') return { type: 'insurance', company: (it.company as string) || '', plan: (it.plan as string) || '', destination: (it.destination as string) || '', startDate: (it.startDate as string) || '', endDate: (it.endDate as string) || '', days: (it.days as string) || '', coverage: (it.coverage as string) || '', price: parsePrice(it.price) }
   if (it.type === 'package') return { type: 'package', name: (it.name as string) || '', destination: (it.destination as string) || '', startDate: (it.startDate as string) || '', endDate: (it.endDate as string) || '', duration: (it.duration as string) || '', includes: (it.includes as string) || '', description: (it.description as string) || '', promotion: (it.promotion as string) || '', price: parsePrice(it.price) }
+  if (it.type === 'day') return { type: 'day', number: Number(it.number) || 1, date: (it.date as string) || '', title: (it.title as string) || '' }
   return null
 }
 
@@ -202,10 +205,10 @@ function buildSummary(q: QuoteDoc) {
       const ca = it as CarItem
       L.push('CARRO ' + ca.category + ' — ' + ca.model + '  (' + ca.pickupDate + ' a ' + ca.returnDate + ', ' + ca.days + ' días, ' + ca.transmission + ')')
     }
-    L.push('  Precio: ' + money(it.price, q.currency) + ' ' + q.currency)
+    if (it.type !== 'day') L.push('  Precio: ' + money((it as { price: number }).price, q.currency) + ' ' + q.currency)
     L.push('')
   })
-  const sub = q.items.reduce((a, it) => a + (parsePrice(it.price)), 0)
+  const sub = q.items.reduce((a, it) => a + (it.type !== 'day' ? parsePrice((it as { price: number }).price) : 0), 0)
   L.push('Subtotal: ' + money(sub, q.currency) + ' ' + q.currency)
   L.push('TOTAL: ' + money(sub + (Number(q.taxes) || 0), q.currency) + ' ' + q.currency)
   L.push('')
@@ -1141,8 +1144,8 @@ export default function CotizadorApp() {
                  + jubCount     * (quote.priceJubilado  || 0)
                  + infanteCount * (quote.priceInfante   || 0)
   const itemsTotal = (quote.items || [])
-    .filter(it => it.type !== 'flight' && it.type !== 'cruise')
-    .reduce((a, it) => a + (it.price || 0), 0)
+    .filter(it => it.type !== 'flight' && it.type !== 'cruise' && it.type !== 'day')
+    .reduce((a, it) => a + ((it as { price: number }).price || 0), 0)
   const total = paxTotal + itemsTotal
   const paxCount = (quote.pax || []).length
   const perPax = paxCount > 0 ? total / paxCount : total
@@ -1188,7 +1191,7 @@ export default function CotizadorApp() {
   })
 
   const stcColor: Record<string, string> = { Pendiente: '#B08400', Enviada: '#1763B0', Aceptada: '#1F8A5B' }
-  const ITEM_LABELS: Record<string, string> = { flight: 'Vuelo', hotel: 'Hotel', cruise: 'Crucero', tour: 'Tour', transfer: 'Traslado', car: 'Carro', insurance: 'Seguro', package: 'Paquete' }
+  const ITEM_LABELS: Record<string, string> = { day: 'Día', flight: 'Vuelo', hotel: 'Hotel', cruise: 'Crucero', tour: 'Tour', transfer: 'Traslado', car: 'Carro', insurance: 'Seguro', package: 'Paquete' }
   const PAX_CODE: Record<string, string> = { Adulto: 'ADT', Niño: 'CHD', Jubilado: 'JUB', Infante: 'INF' }
 
   // ─── Styles ───────────────────────────────────────────────────────────────────
@@ -1551,7 +1554,7 @@ export default function CotizadorApp() {
           <div style={{ background: '#fff', border: '1px solid #EAEFF4', borderRadius: 12, padding: 16, marginBottom: 14 }}>
             <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 800, letterSpacing: '.08em', textTransform: 'uppercase', color: '#0F3D7A', marginBottom: 12 }}>Productos</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 14 }}>
-              {['flight', 'hotel', 'cruise', 'tour', 'transfer', 'car', 'package'].map(t => (
+              {['flight', 'hotel', 'cruise', 'tour', 'transfer', 'car', 'package', 'day'].map(t => (
                 <button key={t} onClick={() => onAction('add', 0, undefined, t)} style={{ border: '1px solid #BFE6F2', background: '#EAF6FB', color: '#0F3D7A', fontWeight: 700, fontSize: 12, padding: '7px 11px', borderRadius: 8, cursor: 'pointer' }}>
                   + {ITEM_LABELS[t]}
                 </button>
@@ -1861,6 +1864,18 @@ export default function CotizadorApp() {
                           </button>
                         )}
                       </>
+                    )
+                  })()}
+
+                  {/* DAY editor */}
+                  {item.type === 'day' && (() => {
+                    const di = item as DayItem
+                    return (
+                      <div style={{ display: 'grid', gridTemplateColumns: '0.5fr 1.2fr 2fr', gap: 9 }}>
+                        <label><span style={labelSt}>Día #</span><input value={di.number} onChange={e => onField('items.' + idx + '.number', parseInt(e.target.value) || 1)} type="number" min={1} placeholder="1" style={inputSt} /></label>
+                        <label><span style={labelSt}>Fecha</span><input value={di.date} onChange={e => onField('items.' + idx + '.date', e.target.value)} placeholder="Mar 15 jul 2025" style={inputSt} /></label>
+                        <label><span style={labelSt}>Título del día</span><input value={di.title} onChange={e => onField('items.' + idx + '.title', e.target.value)} placeholder="Llegada a Cancún" style={inputSt} /></label>
+                      </div>
                     )
                   })()}
 
@@ -2315,6 +2330,23 @@ export default function CotizadorApp() {
                             </div>
                           </div>
                         </>
+                      )
+                    })()}
+
+                    {/* DAY doc */}
+                    {item.type === 'day' && (() => {
+                      const di = item as DayItem
+                      return (
+                        <div style={{ background: 'linear-gradient(135deg, #0F3D7A 0%, #1A5FAD 100%)', borderRadius: 10, padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 16 }}>
+                          <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 8, padding: '8px 14px', textAlign: 'center', flexShrink: 0 }}>
+                            <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 11, fontWeight: 800, color: 'rgba(255,255,255,0.7)', letterSpacing: '.12em' }}>DÍA</div>
+                            <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 28, fontWeight: 800, color: '#fff', lineHeight: 1 }}>{di.number}</div>
+                          </div>
+                          <div>
+                            {di.date && <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)', letterSpacing: '.06em', marginBottom: 3 }}>{di.date.toUpperCase()}</div>}
+                            {di.title && <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 17, fontWeight: 700, color: '#fff' }}>{di.title}</div>}
+                          </div>
+                        </div>
                       )
                     })()}
 

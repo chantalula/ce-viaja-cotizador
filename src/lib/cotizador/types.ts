@@ -118,6 +118,14 @@ export interface CarItem {
   price: number
 }
 
+export interface DayItem {
+  type: 'day'
+  number: number
+  date: string
+  title: string
+  price?: never
+}
+
 export interface PackageItem {
   type: 'package'
   name: string
@@ -143,7 +151,7 @@ export interface InsuranceItem {
   price: number
 }
 
-export type QuoteItem = FlightItem | HotelItem | CruiseItem | TourItem | TransferItem | CarItem | InsuranceItem | PackageItem
+export type QuoteItem = FlightItem | HotelItem | CruiseItem | TourItem | TransferItem | CarItem | InsuranceItem | PackageItem | DayItem
 
 export interface Pax {
   name: string
