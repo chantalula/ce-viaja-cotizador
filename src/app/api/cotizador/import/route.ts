@@ -11,7 +11,7 @@ HOTEL: {"type":"hotel","name":"","stars":0,"location":"","address":"","checkIn":
 CRUCERO: {"type":"cruise","line":"","ship":"","route":"","depart":"","nights":"","cabin":"","cabinLabel":"","boardingTime":"","ports":[{"date":"","port":"","arr":"","dep":""}],"promotion":"","price":0}
 TOUR: {"type":"tour","name":"","location":"","date":"","duration":"","includes":"","price":0}
 TRASLADO: {"type":"transfer","from":"","to":"","date":"","vehicle":"","mode":"Privado","price":0}
-CARRO: {"type":"car","company":"","category":"","model":"","pickupLocation":"","dropoffLocation":"","pickupDate":"","returnDate":"","days":"","passengers":"5","bags":"2","doors":"4","ac":"Sí","transmission":"Automático","protection":"","promotion":"","price":0}
+CARRO: {"type":"car","company":"","category":"","model":"","pickupLocation":"","pickupDate":"","pickupTime":"","dropoffLocation":"","returnDate":"","returnTime":"","days":"","passengers":"5","bags":"2","doors":"4","ac":"Sí","transmission":"Automático","protection":"","promotion":"","price":0}
 Reglas:
 - PASAPORTE: llena "client", "clientPassport" y agrega a "pax". No inventes vuelos.
 - "client": nombre del titular o grupo. NUNCA el código de reservación.
@@ -24,14 +24,18 @@ Reglas:
 - CRUCERO: "line"=naviera (ej: "Royal Caribbean"), "ship"=nombre del barco, "route"=nombre del itinerario, "depart"=fecha de salida en español corto, "nights"=número de noches, "cabin"=código exacto del camarote tal como aparece en el documento (ej: "XQ-GTY OCEAN VIEW BALCONY QUAD GTY"), "cabinLabel"=descripción en español del tipo de camarote basada en el código (ej: "Balcón Vista al Mar para 4 personas" / "Interior Doble" / "Suite con Terraza"), "boardingTime"=hora de embarque en 24h (ej: "10:30 - 14:30"), "ports"=array de puertos día a día con {"date":"07 ago 2026","port":"ORLANDO (PORT CANAVERAL), FL","arr":"","dep":"16:00"} (arr vacío en primer puerto, dep vacío en último), "promotion"=promociones aplicadas (ej: "Last Minute NRD"), "price"=total a pagar.
 - HOTEL: "name"=nombre exacto del hotel, "stars"=número de estrellas del hotel (1-5, o 0 si no se menciona), "location"=ciudad y país (ej: "Cancún, México"), "address"=dirección física del hotel. Si no aparece en el documento, usa tu propio conocimiento para completarla (ej: "Blvd. Kukulcán Km 9.5, Zona Hotelera, Cancún"). Siempre intenta llenar este campo. "checkIn"/"checkOut"=fechas en español corto, "nights"=número de noches como texto, "roomType"=tipo de habitación (ej: "Habitación Doble Estándar", "Suite Junior"), "board"=régimen de comidas (ej: "Todo Incluido", "Solo Desayuno", "Solo Alojamiento"), "cancellation"=si el documento indica que es no reembolsable o sin reembolso usa exactamente "Tarifa no reembolsable"; si permite cancelación o tiene cancelación gratuita usa exactamente "Permite cancelación"; si no se menciona deja "","price"=precio TOTAL de la estadía completa (no por noche). Si el documento muestra precio por noche, multiplícalo por el número de noches. Si muestra precio por habitación o por persona, usa ese total. Busca cualquier valor que diga "total", "precio", "rate", "importe", "amount" o similar.
 - CARRO: Para documentos de arrendadora de autos busca AGRESIVAMENTE estos datos:
-  "company"= mira el encabezado, logo, pie de página, URL o dominio del email para identificar la arrendadora: Alamo, Dollar, Hertz, Budget, Avis, Enterprise, National, Thrifty, Sixt, Fox, Payless, ACE, Europcar. Si ves "alamo.com", "dollar.com", "hertz.com" etc., usa ese nombre.
+  "company"= mira el encabezado, logo, pie de página, URL o dominio del email: Alamo, Dollar, Hertz, Budget, Avis, Enterprise, National, Thrifty, Sixt, Fox, Payless, ACE, Europcar.
   "category"= clase del vehículo (Economy, Compact, Intermediate, Full Size, SUV, Minivan, etc.)
   "model"= modelo específico como "Hyundai Elantra o similar", "Chevrolet Equinox o similar"
   "pickupLocation"/"dropoffLocation"= aeropuerto o dirección de recogida/devolución
-  "pickupDate"/"returnDate"= fechas en español corto
+  "pickupDate"/"returnDate"= fechas en español corto (ej: "Lun 21 jul 2026")
+  "pickupTime"/"returnTime"= hora de recogida y hora de devolución en formato 24h (ej: "10:00", "14:30"). Busca campos como "Pick-up Time", "Return Time", "Hora de recogida", "Hora de devolución", horarios junto a la fecha.
   "days"= número de días de renta
   "protection"= tipo de protección incluida (CDW, LDW, LIS, PAI, etc.)
-  "price"= el precio TOTAL del alquiler. Mira: "Estimated Total", "Total Charges", "Amount Due", "Grand Total", "Total Estimated", "Precio Total", "Total a Pagar". Si ves solo tarifa por día ("Daily Rate", "Rate/Day"), multiplícala por los días y suma protecciones. El precio va SIEMPRE en el campo "price" del item, NUNCA en priceAdulto. EJEMPLO CORRECTO: {"priceAdulto":0,"items":[{"type":"car","price":523.45,...}]}. EJEMPLO INCORRECTO (NUNCA hagas esto): {"priceAdulto":523.45,"items":[{"type":"car","price":0,...}]}.
+  ⚠️ PRECIO DEL CARRO — REGLA ABSOLUTA: El precio va ÚNICAMENTE en el campo "price" dentro del item de tipo "car". Los campos "priceAdulto", "priceNino", "priceJubilado" en la raíz del JSON son EXCLUSIVAMENTE para vuelos y cruceros con desglose por tipo de pasajero — NUNCA para carros, hoteles, tours o traslados. Para esos items siempre usa "price" dentro del item y pon 0 en priceAdulto/priceNino/priceJubilado.
+  Busca el precio en: "Estimated Total", "Total Charges", "Amount Due", "Grand Total", "Total Estimated", "Precio Total", "Total a Pagar", "Total Due", "Charge Total". Si solo ves tarifa por día ("Daily Rate", "Rate/Day"), multiplícala por los días.
+  EJEMPLO CORRECTO: {"priceAdulto":0,"priceNino":0,"priceJubilado":0,"items":[{"type":"car","price":523.45}]}
+  EJEMPLO INCORRECTO: {"priceAdulto":523.45,"items":[{"type":"car","price":0}]}
 - Fechas en español corto: "Jue 21 may 2026". Deja "" o 0 lo que no aparezca.
 - "duration": déjalo SIEMPRE como "" (cadena vacía). El sistema calcula la duración correcta con cambio de horario automáticamente. EXCEPCIÓN: si la duración aparece explícita en el documento (ej: "9h 45m", "Flight time 10:20"), úsala tal cual en formato "Xh Ym".`
 
