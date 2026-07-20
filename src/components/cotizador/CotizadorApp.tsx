@@ -2352,12 +2352,12 @@ export default function CotizadorApp() {
                               <div style={{ flex: 1 }}>
                                 <div style={{ fontSize: 10, color: '#9AA8B8', letterSpacing: '.08em', marginBottom: 4 }}>RECORRIDO</div>
                                 <div style={{ fontSize: 15, fontWeight: 700, color: '#15293F' }}>{tr.from} → {tr.to}</div>
-                                {tr.date && <div style={{ fontSize: 12, color: '#5B7186', marginTop: 3 }}>{tr.date}</div>}
                               </div>
-                              {tr.pickupTime && (
+                              {(tr.date || tr.pickupTime) && (
                                 <div style={{ textAlign: 'center', background: '#EEF3FB', borderRadius: 10, padding: '10px 18px', flexShrink: 0 }}>
-                                  <div style={{ fontSize: 10, color: '#5B7186', letterSpacing: '.06em', marginBottom: 2 }}>RECOGIDA</div>
-                                  <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 28, fontWeight: 800, color: '#0F3D7A', lineHeight: 1 }}>{tr.pickupTime}</div>
+                                  <div style={{ fontSize: 10, color: '#5B7186', letterSpacing: '.06em', marginBottom: 4 }}>RECOGIDA</div>
+                                  {tr.date && <div style={{ fontSize: 15, fontWeight: 700, color: '#0F3D7A', marginBottom: 2 }}>{tr.date}</div>}
+                                  {tr.pickupTime && <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 28, fontWeight: 800, color: '#0F3D7A', lineHeight: 1 }}>{tr.pickupTime}</div>}
                                 </div>
                               )}
                             </div>
