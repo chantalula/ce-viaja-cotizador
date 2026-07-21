@@ -76,6 +76,7 @@ export interface TourItem {
   date: string
   duration: string
   includes: string
+  description: string
   price: number
 }
 

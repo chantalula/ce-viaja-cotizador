@@ -22,7 +22,7 @@ DÍA: {"type":"day","number":1,"date":"Mar 15 jul 2025","title":"Llegada a Canc�
 VUELO: {"type":"flight","dir":"Ida"|"Vuelta"|"Tramo interno","date":"Jue 21 may 2026","price":0,"baggage":"","segments":[{"airline":"","flightNo":"","alliance":"—","from":"","fromCity":"","dep":"","to":"","toCity":"","arr":"","plus":"","duration":"","aircraft":"","cabin":"Económica","connectionAfter":""}]}
 HOTEL: {"type":"hotel","name":"","stars":0,"location":"","address":"","checkIn":"","checkOut":"","nights":"","roomType":"","board":"","cancellation":"Tarifa no reembolsable"|"Permite cancelación"|"","price":0}
 CRUCERO: {"type":"cruise","line":"","ship":"","route":"","depart":"","nights":"","cabin":"","cabinLabel":"","boardingTime":"","ports":[],"promotion":"","price":0}
-TOUR: {"type":"tour","name":"","location":"","date":"","duration":"","includes":"","price":0}
+TOUR: {"type":"tour","name":"","location":"","date":"","duration":"","includes":"","description":"","price":0}
 TRASLADO: {"type":"transfer","from":"","to":"","date":"","pickupTime":"","vehicle":"","passengers":"","description":"","mode":"Privado","price":0}
 PAQUETE: {"type":"package","name":"","destination":"","startDate":"","endDate":"","duration":"","includes":"","description":"","promotion":"","price":0}
 CARRO: {"type":"car","company":"","category":"","model":"","pickupLocation":"","pickupCode":"","pickupAddress":"","pickupDate":"","pickupTime":"","dropoffLocation":"","returnCode":"","returnAddress":"","returnDate":"","returnTime":"","days":"","passengers":"5","bags":"2","doors":"4","ac":"Sí","transmission":"Automático","protection":"","promotion":"","price":0}

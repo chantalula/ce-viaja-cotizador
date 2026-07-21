@@ -53,7 +53,7 @@ function newItem(type: string): QuoteItem {
   if (type === 'flight') return { type: 'flight', dir: 'Ida', date: '', price: 0, baggage: '1 maleta 23 kg + equipaje de mano', segments: [newSeg()] }
   if (type === 'hotel') return { type: 'hotel', name: 'Hotel', stars: 0, location: '', address: '', checkIn: '', checkOut: '', nights: '', roomType: '', board: '', cancellation: '', price: 0 }
   if (type === 'cruise') return { type: 'cruise', line: '', ship: '', route: '', depart: '', nights: '', cabin: '', cabinLabel: '', boardingTime: '', ports: [], promotion: '', price: 0 }
-  if (type === 'tour') return { type: 'tour', name: 'Tour', location: '', date: '', duration: '', includes: '', price: 0 }
+  if (type === 'tour') return { type: 'tour', name: 'Tour', location: '', date: '', duration: '', includes: '', description: '', price: 0 }
   if (type === 'car') return { type: 'car', company: '', category: '', model: '', pickupLocation: '', pickupCode: '', pickupAddress: '', pickupDate: '', pickupTime: '', dropoffLocation: '', returnCode: '', returnAddress: '', returnDate: '', returnTime: '', days: '', passengers: '5', bags: '2', doors: '4', ac: 'Sí', transmission: 'Automático', protection: 'Protección Total', promotion: '', price: 0 }
   if (type === 'insurance') return { type: 'insurance', company: '', plan: '', destination: '', startDate: '', endDate: '', days: '', coverage: '', price: 0 }
   if (type === 'package') return { type: 'package', name: '', destination: '', startDate: '', endDate: '', duration: '', includes: '', description: '', promotion: '', price: 0 }
@@ -159,7 +159,7 @@ function normalizeItem(it: Record<string, unknown>): QuoteItem | null {
   }
   if (it.type === 'hotel') return { type: 'hotel', name: (it.name as string) || 'Hotel', stars: Number(it.stars) || 0, location: (it.location as string) || '', address: (it.address as string) || '', checkIn: (it.checkIn as string) || '', checkOut: (it.checkOut as string) || '', nights: (it.nights as string) || '', roomType: (it.roomType as string) || '', board: (it.board as string) || '', cancellation: (it.cancellation as string) || '', price: parsePrice(it.price) }
   if (it.type === 'cruise') return { type: 'cruise', line: (it.line as string) || '', ship: (it.ship as string) || '', route: (it.route as string) || '', depart: (it.depart as string) || '', nights: (it.nights as string) || '', cabin: (it.cabin as string) || '', cabinLabel: (it.cabinLabel as string) || '', boardingTime: (it.boardingTime as string) || '', ports: ((it.ports as unknown[]) || []).map((p) => ({ date: (p as Record<string,string>).date || '', port: (p as Record<string,string>).port || '', arr: (p as Record<string,string>).arr || '', dep: (p as Record<string,string>).dep || '' })), promotion: (it.promotion as string) || '', price: parsePrice(it.price) }
-  if (it.type === 'tour') return { type: 'tour', name: (it.name as string) || 'Tour', location: (it.location as string) || '', date: (it.date as string) || '', duration: (it.duration as string) || '', includes: (it.includes as string) || '', price: parsePrice(it.price) }
+  if (it.type === 'tour') return { type: 'tour', name: (it.name as string) || 'Tour', location: (it.location as string) || '', date: (it.date as string) || '', duration: (it.duration as string) || '', includes: (it.includes as string) || '', description: (it.description as string) || '', price: parsePrice(it.price) }
   if (it.type === 'transfer') return { type: 'transfer', from: (it.from as string) || '', to: (it.to as string) || '', date: (it.date as string) || '', pickupTime: (it.pickupTime as string) || '', vehicle: (it.vehicle as string) || '', passengers: (it.passengers as string) || '', description: (it.description as string) || '', mode: (it.mode as string) || 'Privado', price: parsePrice(it.price) }
   if (it.type === 'car') return { type: 'car', company: (it.company as string) || '', category: (it.category as string) || '', model: (it.model as string) || '', pickupLocation: (it.pickupLocation as string) || '', pickupCode: (it.pickupCode as string) || '', pickupAddress: (it.pickupAddress as string) || '', pickupDate: (it.pickupDate as string) || '', pickupTime: (it.pickupTime as string) || '', dropoffLocation: (it.dropoffLocation as string) || '', returnCode: (it.returnCode as string) || '', returnAddress: (it.returnAddress as string) || '', returnDate: (it.returnDate as string) || '', returnTime: (it.returnTime as string) || '', days: (it.days as string) || '', passengers: (it.passengers as string) || '5', bags: (it.bags as string) || '2', doors: (it.doors as string) || '4', ac: (it.ac as string) || 'Sí', transmission: (it.transmission as string) || 'Automático', protection: (it.protection as string) || '', promotion: (it.promotion as string) || '', price: parsePrice(it.price) }
   if (it.type === 'insurance') return { type: 'insurance', company: (it.company as string) || '', plan: (it.plan as string) || '', destination: (it.destination as string) || '', startDate: (it.startDate as string) || '', endDate: (it.endDate as string) || '', days: (it.days as string) || '', coverage: (it.coverage as string) || '', price: parsePrice(it.price) }
@@ -272,6 +272,7 @@ export default function CotizadorApp() {
   const [carPhotos, setCarPhotos] = useState<Record<string, string>>({})
   const [packagePhotos, setPackagePhotos] = useState<Record<string, string[]>>({})
   const [transferPhotos, setTransferPhotos] = useState<Record<string, string>>({})
+  const [tourPhotos, setTourPhotos] = useState<Record<string, string>>({})
   const [cruisePhotos, setCruisePhotos] = useState<Record<string, string>>({})
   // keys: `${idx}-ext` (ship exterior) and `${idx}-cabin` (cabin interior)
   const [shipAutoPhoto, setShipAutoPhoto] = useState<Record<string, string>>({})
@@ -344,6 +345,10 @@ export default function CotizadorApp() {
         const tr = item as TransferItem
         if (!transferPhotos[`tr${idx}-photo`] && tr.vehicle) fetchTransferPhoto(tr.vehicle, idx)
       }
+      if (item.type === 'tour') {
+        const ti = item as TourItem
+        if (!tourPhotos[`tour${idx}-photo`] && (ti.name || ti.location)) fetchTourPhoto(ti.name, ti.location, idx)
+      }
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quote.items])
@@ -409,12 +414,12 @@ export default function CotizadorApp() {
       fresh.number = fmtNum(data.value)
       fresh.sellerIndex = quote.sellerIndex
       setQuote(fresh)
-      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({}); setTransferPhotos({})
+      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({}); setTransferPhotos({}); setTourPhotos({})
     } catch {
       const fresh = seed()
       fresh.sellerIndex = quote.sellerIndex
       setQuote(fresh)
-      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({}); setTransferPhotos({})
+      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({}); setTransferPhotos({}); setTourPhotos({})
     }
   }
 
@@ -461,7 +466,7 @@ export default function CotizadorApp() {
     const r = savedQuotes.find(x => x.id === id)
     if (r) {
       setQuote(JSON.parse(JSON.stringify(r.quote)))
-      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({}); setTransferPhotos({})
+      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({}); setTransferPhotos({}); setTourPhotos({})
       setShowDB(false)
     }
   }
@@ -470,7 +475,7 @@ export default function CotizadorApp() {
     const r = savedQuotes.find(x => x.id === id)
     if (!r) return
     setQuote(JSON.parse(JSON.stringify(r.quote)))
-    setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({}); setTransferPhotos({})
+    setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({}); setTransferPhotos({}); setTourPhotos({})
     setShowDB(false)
     // Wait one frame for the doc to render, then generate PDF
     await new Promise(res => setTimeout(res, 600))
@@ -486,7 +491,7 @@ export default function CotizadorApp() {
       const q: QuoteDoc = JSON.parse(JSON.stringify(r.quote))
       q.number = fmtNum(data.value)
       setQuote(q)
-      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({}); setTransferPhotos({})
+      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({}); setTransferPhotos({}); setTourPhotos({})
       setShowDB(false)
       showToast('Cotización duplicada')
     } catch {
@@ -921,6 +926,20 @@ export default function CotizadorApp() {
       if (!res.ok) return
       const data = await res.json() as { url?: string }
       if (data.url) setTransferPhotos(p => ({ ...p, [`tr${idx}-photo`]: data.url! }))
+    } catch { /* ignore */ }
+  }
+
+  async function fetchTourPhoto(name: string, location: string, idx: number) {
+    if (!name.trim() && !location.trim()) return
+    try {
+      const res = await fetch('/api/cotizador/tour-photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, location }),
+      })
+      if (!res.ok) return
+      const data = await res.json() as { url?: string }
+      if (data.url) setTourPhotos(p => ({ ...p, [`tour${idx}-photo`]: data.url! }))
     } catch { /* ignore */ }
   }
 
@@ -1725,16 +1744,28 @@ export default function CotizadorApp() {
                   {/* TOUR editor */}
                   {item.type === 'tour' && (() => {
                     const ti = item as TourItem
+                    const tPhoto = tourPhotos[`tour${idx}-photo`]
                     return (
                       <>
-                        <label style={{ display: 'block', marginBottom: 9 }}><span style={labelSt}>Nombre del tour</span><input value={ti.name} onChange={e => onField('items.' + idx + '.name', e.target.value)} style={inputSt} /></label>
+                        <label style={{ display: 'block', marginBottom: 9 }}><span style={labelSt}>Nombre del tour</span><input value={ti.name} onChange={e => { onField('items.' + idx + '.name', e.target.value) }} style={inputSt} /></label>
                         <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr', gap: 9, marginBottom: 9 }}>
-                          <label><span style={labelSt}>Lugar</span><input value={ti.location} onChange={e => onField('items.' + idx + '.location', e.target.value)} style={inputSt} /></label>
+                          <label><span style={labelSt}>Lugar</span><input value={ti.location} onChange={e => { onField('items.' + idx + '.location', e.target.value) }} style={inputSt} /></label>
                           <label><span style={labelSt}>Fecha</span><input value={ti.date} onChange={e => onField('items.' + idx + '.date', e.target.value)} style={inputSt} /></label>
-                          <label><span style={labelSt}>Duración</span><input value={ti.duration} onChange={e => onField('items.' + idx + '.duration', e.target.value)} style={inputSt} /></label>
+                          <label><span style={labelSt}>Duración</span><input value={ti.duration} onChange={e => onField('items.' + idx + '.duration', e.target.value)} placeholder="8 horas" style={inputSt} /></label>
                           <label><span style={labelSt}>Precio (USD)</span><input value={ti.price || ''} onChange={e => onField('items.' + idx + '.price', parseFloat(e.target.value) || 0)} type="number" placeholder="0.00" style={{ ...inputSt, fontWeight: 700, color: '#0F3D7A' }} /></label>
                         </div>
-                        <label><span style={labelSt}>Incluye</span><input value={ti.includes} onChange={e => onField('items.' + idx + '.includes', e.target.value)} placeholder="Guía, transporte, entradas" style={inputSt} /></label>
+                        <label style={{ display: 'block', marginBottom: 9 }}><span style={labelSt}>Incluye</span><input value={ti.includes} onChange={e => onField('items.' + idx + '.includes', e.target.value)} placeholder="Guía · Transporte · Entradas · Almuerzo" style={inputSt} /></label>
+                        <label style={{ display: 'block', marginBottom: 9 }}><span style={labelSt}>Descripción</span><textarea value={ti.description} onChange={e => onField('items.' + idx + '.description', e.target.value)} placeholder="Descripción detallada de las actividades del tour…" rows={3} style={{ ...inputSt, width: '100%', resize: 'vertical', boxSizing: 'border-box' }} /></label>
+                        {/* Photo */}
+                        <div style={{ fontSize: 11, color: '#8896A6', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>Foto del tour</div>
+                        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                          <div style={{ width: 160, height: 100, flexShrink: 0 }}>
+                            <ImageSlot id={`tour${idx}-photo`} placeholder="Foto tour" photos={tourPhotos} onChange={(id, src) => setTourPhotos(p => ({ ...p, [id]: src }))} />
+                          </div>
+                          <button onClick={() => fetchTourPhoto(ti.name, ti.location, idx)} style={{ border: '1px solid #BFE6F2', background: '#EAF6FB', color: '#0F3D7A', fontWeight: 700, fontSize: 12, padding: '7px 12px', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                            {tPhoto ? '🔄 Nueva foto' : '🔍 Buscar foto'}
+                          </button>
+                        </div>
                       </>
                     )
                   })()}
@@ -2222,15 +2253,67 @@ export default function CotizadorApp() {
                     {/* TOUR doc */}
                     {item.type === 'tour' && (() => {
                       const ti = item as TourItem
+                      const tPhoto = tourPhotos[`tour${idx}-photo`]
                       return (
                         <>
-                          <div style={{ marginBottom: 13 }}>
-                            <div style={{ background: '#16A99C', color: '#fff', fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.12em', padding: '7px 14px', borderRadius: 6, display: 'inline-block' }}>TOUR · {ti.name}</div>
+                          {/* Header badge */}
+                          <div style={{ marginBottom: 13, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                            <div style={{ background: '#16A99C', color: '#fff', fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.12em', padding: '7px 14px', borderRadius: 6 }}>🗺️ TOUR</div>
+                            {ti.location && <div style={{ fontSize: 13, fontWeight: 600, color: '#5B7186' }}>📍 {ti.location}</div>}
+                            {ti.date && <div style={{ background: '#EEF3FB', color: '#0F3D7A', fontSize: 12, fontWeight: 700, padding: '5px 10px', borderRadius: 6 }}>📅 {ti.date}</div>}
                           </div>
-                          <div style={{ border: '1px solid #E6EDF3', borderRadius: 10, padding: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '11px 16px' }}>
-                            <div><div style={{ fontSize: 11, color: '#9AA8B8' }}>LUGAR</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{ti.location}</div></div>
-                            <div><div style={{ fontSize: 11, color: '#9AA8B8' }}>FECHA · DURACIÓN</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{ti.date} · {ti.duration}</div></div>
-                            <div style={{ gridColumn: 'span 2' }}><div style={{ fontSize: 11, color: '#9AA8B8' }}>INCLUYE</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{ti.includes}</div></div>
+
+                          <div style={{ border: '1px solid #E6EDF3', borderRadius: 12, overflow: 'hidden' }}>
+                            {/* Photo + title + duration */}
+                            <div style={{ position: 'relative' }}>
+                              {tPhoto
+                                ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <div style={{ position: 'relative', height: 180, overflow: 'hidden' }}>
+                                    <img src={tPhoto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(10,30,60,0.75) 0%, transparent 55%)' }} />
+                                    <div style={{ position: 'absolute', bottom: 14, left: 18, right: 18 }}>
+                                      <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 20, fontWeight: 800, color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,.4)' }}>{ti.name}</div>
+                                    </div>
+                                    {ti.duration && (
+                                      <div style={{ position: 'absolute', top: 12, right: 14, background: '#16A99C', color: '#fff', fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 800, padding: '5px 11px', borderRadius: 20 }}>⏱ {ti.duration}</div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div style={{ padding: '16px 18px', borderBottom: '1px solid #EDF1F5', display: 'flex', alignItems: 'center', gap: 14 }}>
+                                    <div style={{ flex: 1 }}>
+                                      <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 18, fontWeight: 800, color: '#15293F' }}>{ti.name}</div>
+                                    </div>
+                                    {ti.duration && (
+                                      <div style={{ background: '#E6F9F7', borderRadius: 10, padding: '8px 14px', textAlign: 'center', flexShrink: 0 }}>
+                                        <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 15, fontWeight: 800, color: '#16A99C' }}>{ti.duration}</div>
+                                        <div style={{ fontSize: 10, color: '#8896A6', letterSpacing: '.06em' }}>DURACIÓN</div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )
+                              }
+                            </div>
+
+                            {/* Description */}
+                            {ti.description && (
+                              <div style={{ padding: '14px 18px', borderBottom: '1px solid #EDF1F5', background: '#FAFCFE' }}>
+                                <div style={{ fontSize: 10, color: '#16A99C', fontWeight: 800, letterSpacing: '.08em', marginBottom: 6 }}>DESCRIPCIÓN</div>
+                                <div style={{ fontSize: 13, color: '#15293F', lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>{ti.description}</div>
+                              </div>
+                            )}
+
+                            {/* Includes checklist */}
+                            {ti.includes && (
+                              <div style={{ padding: '12px 18px', background: '#F0FAF9' }}>
+                                <div style={{ fontSize: 10, color: '#16A99C', fontWeight: 800, letterSpacing: '.08em', marginBottom: 7 }}>✅ INCLUYE</div>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px 18px' }}>
+                                  {ti.includes.split('·').map((inc, i) => inc.trim() ? (
+                                    <span key={i} style={{ fontSize: 13, color: '#15293F', fontWeight: 500 }}>✔ {inc.trim()}</span>
+                                  ) : null)}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </>
                       )
