@@ -39,6 +39,7 @@ Reglas:
 - Si la instrucción pide agregar un comentario o nota, ponlo en el campo "comments".
 - Si pide quitar algo, elimínalo del array items.
 - Si pide cambiar un precio, actualiza el campo correspondiente.
+- SEGUROS: el campo "coverage" debe tener MÁXIMO 8 categorías principales separadas por ·, sin montos individuales por cobertura. Si ves un seguro con demasiadas sub-coberturas, condesalas en categorías (ej: "Gastos médicos · Cancelación · Equipaje · Responsabilidad civil"). El campo "notes" debe ser máximo 2-3 líneas con condiciones clave, no el texto completo de las pólizas.
 - Mantén todos los campos existentes que no se mencionen en la instrucción.
 - TOURS: si algún item de tipo "tour" tiene "duration" vacío, rellénalo estimando según el tipo de actividad (visita panorámica → "3 horas"; excursión a sitio histórico → "Día completo"; city tour → "4 horas"; traslado nocturno/show → "2-3 horas"). Si "language" está vacío y el tour es en un país hispanohablante ponlo en "Español"; si es en destino europeo no hispanohablante usa "Español e Inglés" (guía bilingüe típico en paquetes turísticos).
 - NUNCA respondas que algo no se puede hacer por ser "visual".

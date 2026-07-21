@@ -2523,9 +2523,9 @@ export default function CotizadorApp() {
                             {ins.coverage && (
                               <div style={{ padding: '12px 18px', borderBottom: ins.notes ? '1px solid #E6EDF3' : undefined, background: '#F4FBF7' }}>
                                 <div style={{ fontSize: 10, color: '#1A6B3C', fontWeight: 800, letterSpacing: '.08em', marginBottom: 8 }}>✅ COBERTURAS INCLUIDAS</div>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 20px' }}>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                                   {ins.coverage.split('·').map((cov, i) => cov.trim() ? (
-                                    <span key={i} style={{ fontSize: 13, color: '#15293F', fontWeight: 500 }}>🛡 {cov.trim()}</span>
+                                    <span key={i} style={{ background: '#E0F3EB', color: '#1A6B3C', fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 20, whiteSpace: 'nowrap' }}>✓ {cov.trim()}</span>
                                   ) : null)}
                                 </div>
                               </div>
@@ -2533,9 +2533,9 @@ export default function CotizadorApp() {
 
                             {/* Notes */}
                             {ins.notes && (
-                              <div style={{ padding: '12px 18px', background: '#FAFCFE' }}>
-                                <div style={{ fontSize: 10, color: '#5B7186', fontWeight: 800, letterSpacing: '.08em', marginBottom: 6 }}>ℹ️ INFORMACIÓN ADICIONAL</div>
-                                <div style={{ fontSize: 12, color: '#5B7186', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{ins.notes}</div>
+                              <div style={{ padding: '10px 18px', background: '#FAFCFE' }}>
+                                <div style={{ fontSize: 10, color: '#5B7186', fontWeight: 800, letterSpacing: '.08em', marginBottom: 4 }}>ℹ️ INFORMACIÓN ADICIONAL</div>
+                                <div style={{ fontSize: 11, color: '#8896A6', lineHeight: 1.6 }}>{ins.notes}</div>
                               </div>
                             )}
                           </div>
