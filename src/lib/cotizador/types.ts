@@ -69,13 +69,22 @@ export interface CruiseItem {
   price: number
 }
 
+export interface TourEntrance {
+  name: string
+  included: boolean
+  price: string
+}
+
 export interface TourItem {
   type: 'tour'
   name: string
   location: string
   date: string
   duration: string
+  language: string
   includes: string
+  meals: string
+  entrances: TourEntrance[]
   description: string
   price: number
 }

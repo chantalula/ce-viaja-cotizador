@@ -11,6 +11,7 @@ import type {
   CruiseItem,
   CruisePort,
   TourItem,
+  TourEntrance,
   TransferItem,
   CarItem,
   InsuranceItem,
@@ -53,7 +54,7 @@ function newItem(type: string): QuoteItem {
   if (type === 'flight') return { type: 'flight', dir: 'Ida', date: '', price: 0, baggage: '1 maleta 23 kg + equipaje de mano', segments: [newSeg()] }
   if (type === 'hotel') return { type: 'hotel', name: 'Hotel', stars: 0, location: '', address: '', checkIn: '', checkOut: '', nights: '', roomType: '', board: '', cancellation: '', price: 0 }
   if (type === 'cruise') return { type: 'cruise', line: '', ship: '', route: '', depart: '', nights: '', cabin: '', cabinLabel: '', boardingTime: '', ports: [], promotion: '', price: 0 }
-  if (type === 'tour') return { type: 'tour', name: 'Tour', location: '', date: '', duration: '', includes: '', description: '', price: 0 }
+  if (type === 'tour') return { type: 'tour', name: 'Tour', location: '', date: '', duration: '', language: '', includes: '', meals: '', entrances: [], description: '', price: 0 }
   if (type === 'car') return { type: 'car', company: '', category: '', model: '', pickupLocation: '', pickupCode: '', pickupAddress: '', pickupDate: '', pickupTime: '', dropoffLocation: '', returnCode: '', returnAddress: '', returnDate: '', returnTime: '', days: '', passengers: '5', bags: '2', doors: '4', ac: 'Sí', transmission: 'Automático', protection: 'Protección Total', promotion: '', price: 0 }
   if (type === 'insurance') return { type: 'insurance', company: '', plan: '', destination: '', startDate: '', endDate: '', days: '', coverage: '', price: 0 }
   if (type === 'package') return { type: 'package', name: '', destination: '', startDate: '', endDate: '', duration: '', includes: '', description: '', promotion: '', price: 0 }
@@ -159,7 +160,7 @@ function normalizeItem(it: Record<string, unknown>): QuoteItem | null {
   }
   if (it.type === 'hotel') return { type: 'hotel', name: (it.name as string) || 'Hotel', stars: Number(it.stars) || 0, location: (it.location as string) || '', address: (it.address as string) || '', checkIn: (it.checkIn as string) || '', checkOut: (it.checkOut as string) || '', nights: (it.nights as string) || '', roomType: (it.roomType as string) || '', board: (it.board as string) || '', cancellation: (it.cancellation as string) || '', price: parsePrice(it.price) }
   if (it.type === 'cruise') return { type: 'cruise', line: (it.line as string) || '', ship: (it.ship as string) || '', route: (it.route as string) || '', depart: (it.depart as string) || '', nights: (it.nights as string) || '', cabin: (it.cabin as string) || '', cabinLabel: (it.cabinLabel as string) || '', boardingTime: (it.boardingTime as string) || '', ports: ((it.ports as unknown[]) || []).map((p) => ({ date: (p as Record<string,string>).date || '', port: (p as Record<string,string>).port || '', arr: (p as Record<string,string>).arr || '', dep: (p as Record<string,string>).dep || '' })), promotion: (it.promotion as string) || '', price: parsePrice(it.price) }
-  if (it.type === 'tour') return { type: 'tour', name: (it.name as string) || 'Tour', location: (it.location as string) || '', date: (it.date as string) || '', duration: (it.duration as string) || '', includes: (it.includes as string) || '', description: (it.description as string) || '', price: parsePrice(it.price) }
+  if (it.type === 'tour') return { type: 'tour', name: (it.name as string) || 'Tour', location: (it.location as string) || '', date: (it.date as string) || '', duration: (it.duration as string) || '', language: (it.language as string) || '', includes: (it.includes as string) || '', meals: (it.meals as string) || '', entrances: Array.isArray(it.entrances) ? (it.entrances as TourEntrance[]).map(e => ({ name: e.name || '', included: Boolean(e.included), price: e.price || '' })) : [], description: (it.description as string) || '', price: parsePrice(it.price) }
   if (it.type === 'transfer') return { type: 'transfer', from: (it.from as string) || '', to: (it.to as string) || '', date: (it.date as string) || '', pickupTime: (it.pickupTime as string) || '', vehicle: (it.vehicle as string) || '', passengers: (it.passengers as string) || '', description: (it.description as string) || '', mode: (it.mode as string) || 'Privado', price: parsePrice(it.price) }
   if (it.type === 'car') return { type: 'car', company: (it.company as string) || '', category: (it.category as string) || '', model: (it.model as string) || '', pickupLocation: (it.pickupLocation as string) || '', pickupCode: (it.pickupCode as string) || '', pickupAddress: (it.pickupAddress as string) || '', pickupDate: (it.pickupDate as string) || '', pickupTime: (it.pickupTime as string) || '', dropoffLocation: (it.dropoffLocation as string) || '', returnCode: (it.returnCode as string) || '', returnAddress: (it.returnAddress as string) || '', returnDate: (it.returnDate as string) || '', returnTime: (it.returnTime as string) || '', days: (it.days as string) || '', passengers: (it.passengers as string) || '5', bags: (it.bags as string) || '2', doors: (it.doors as string) || '4', ac: (it.ac as string) || 'Sí', transmission: (it.transmission as string) || 'Automático', protection: (it.protection as string) || '', promotion: (it.promotion as string) || '', price: parsePrice(it.price) }
   if (it.type === 'insurance') return { type: 'insurance', company: (it.company as string) || '', plan: (it.plan as string) || '', destination: (it.destination as string) || '', startDate: (it.startDate as string) || '', endDate: (it.endDate as string) || '', days: (it.days as string) || '', coverage: (it.coverage as string) || '', price: parsePrice(it.price) }
@@ -1040,7 +1041,7 @@ export default function CotizadorApp() {
     } catch { /* ignore */ }
   }
 
-  function onField(path: string, value: string | number) {
+  function onField(path: string, value: string | number | unknown[]) {
     setQuote(q => {
       const next = setPath(q, path, value)
       const segMatch = path.match(/^items\.(\d+)\.segments\.(\d+)\.(dep|arr|plus|from|to|toCity)$/)
@@ -1748,13 +1749,35 @@ export default function CotizadorApp() {
                     return (
                       <>
                         <label style={{ display: 'block', marginBottom: 9 }}><span style={labelSt}>Nombre del tour</span><input value={ti.name} onChange={e => { onField('items.' + idx + '.name', e.target.value) }} style={inputSt} /></label>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr', gap: 9, marginBottom: 9 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.9fr 0.9fr 0.9fr 1fr', gap: 9, marginBottom: 9 }}>
                           <label><span style={labelSt}>Lugar</span><input value={ti.location} onChange={e => { onField('items.' + idx + '.location', e.target.value) }} style={inputSt} /></label>
                           <label><span style={labelSt}>Fecha</span><input value={ti.date} onChange={e => onField('items.' + idx + '.date', e.target.value)} style={inputSt} /></label>
                           <label><span style={labelSt}>Duración</span><input value={ti.duration} onChange={e => onField('items.' + idx + '.duration', e.target.value)} placeholder="8 horas" style={inputSt} /></label>
+                          <label><span style={labelSt}>Idioma</span><input value={ti.language} onChange={e => onField('items.' + idx + '.language', e.target.value)} placeholder="Español" style={inputSt} /></label>
                           <label><span style={labelSt}>Precio (USD)</span><input value={ti.price || ''} onChange={e => onField('items.' + idx + '.price', parseFloat(e.target.value) || 0)} type="number" placeholder="0.00" style={{ ...inputSt, fontWeight: 700, color: '#0F3D7A' }} /></label>
                         </div>
-                        <label style={{ display: 'block', marginBottom: 9 }}><span style={labelSt}>Incluye</span><input value={ti.includes} onChange={e => onField('items.' + idx + '.includes', e.target.value)} placeholder="Guía · Transporte · Entradas · Almuerzo" style={inputSt} /></label>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9, marginBottom: 9 }}>
+                          <label><span style={labelSt}>Incluye</span><input value={ti.includes} onChange={e => onField('items.' + idx + '.includes', e.target.value)} placeholder="Guía · Transporte · Seguro" style={inputSt} /></label>
+                          <label><span style={labelSt}>Comida</span><input value={ti.meals} onChange={e => onField('items.' + idx + '.meals', e.target.value)} placeholder="Almuerzo incluido / No incluye comida" style={inputSt} /></label>
+                        </div>
+                        {/* Entrances */}
+                        <div style={{ marginBottom: 9 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
+                            <span style={labelSt}>Entradas</span>
+                            <button onClick={() => onField('items.' + idx + '.entrances', [...(ti.entrances || []), { name: '', included: true, price: '' }])} style={{ border: '1px solid #BFE6F2', background: '#EAF6FB', color: '#0F3D7A', fontWeight: 700, fontSize: 11, padding: '3px 9px', borderRadius: 6, cursor: 'pointer' }}>+ Entrada</button>
+                          </div>
+                          {(ti.entrances || []).map((en, ei) => (
+                            <div key={ei} style={{ display: 'grid', gridTemplateColumns: '2fr auto 1fr auto', gap: 6, alignItems: 'center', marginBottom: 5 }}>
+                              <input value={en.name} onChange={e => { const arr = [...(ti.entrances||[])]; arr[ei] = { ...arr[ei], name: e.target.value }; onField('items.' + idx + '.entrances', arr) }} placeholder="Nombre de la entrada" style={inputSt} />
+                              <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#15293F', whiteSpace: 'nowrap', cursor: 'pointer' }}>
+                                <input type="checkbox" checked={en.included} onChange={e => { const arr = [...(ti.entrances||[])]; arr[ei] = { ...arr[ei], included: e.target.checked }; onField('items.' + idx + '.entrances', arr) }} />
+                                Incluida
+                              </label>
+                              <input value={en.price} onChange={e => { const arr = [...(ti.entrances||[])]; arr[ei] = { ...arr[ei], price: e.target.value }; onField('items.' + idx + '.entrances', arr) }} placeholder="Costo extra (ej: $25)" style={{ ...inputSt, color: en.included ? '#9AA8B8' : '#C0504D' }} disabled={en.included} />
+                              <button onClick={() => { const arr = (ti.entrances||[]).filter((_, i) => i !== ei); onField('items.' + idx + '.entrances', arr) }} style={{ border: '1px solid #F0CFCF', background: '#fff', color: '#C0504D', width: 24, height: 24, borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>×</button>
+                            </div>
+                          ))}
+                        </div>
                         <label style={{ display: 'block', marginBottom: 9 }}><span style={labelSt}>Descripción</span><textarea value={ti.description} onChange={e => onField('items.' + idx + '.description', e.target.value)} placeholder="Descripción detallada de las actividades del tour…" rows={3} style={{ ...inputSt, width: '100%', resize: 'vertical', boxSizing: 'border-box' }} /></label>
                         {/* Photo */}
                         <div style={{ fontSize: 11, color: '#8896A6', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 6 }}>Foto del tour</div>
@@ -2256,45 +2279,42 @@ export default function CotizadorApp() {
                       const tPhoto = tourPhotos[`tour${idx}-photo`]
                       return (
                         <>
-                          {/* Header badge */}
+                          {/* Header badges row */}
                           <div style={{ marginBottom: 13, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                             <div style={{ background: '#16A99C', color: '#fff', fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.12em', padding: '7px 14px', borderRadius: 6 }}>🗺️ TOUR</div>
                             {ti.location && <div style={{ fontSize: 13, fontWeight: 600, color: '#5B7186' }}>📍 {ti.location}</div>}
                             {ti.date && <div style={{ background: '#EEF3FB', color: '#0F3D7A', fontSize: 12, fontWeight: 700, padding: '5px 10px', borderRadius: 6 }}>📅 {ti.date}</div>}
                             {ti.duration && <div style={{ background: '#E6F9F7', color: '#16A99C', fontSize: 12, fontWeight: 700, padding: '5px 10px', borderRadius: 6 }}>⏱ {ti.duration}</div>}
+                            {ti.language && <div style={{ background: '#F5F0FF', color: '#6B4EBF', fontSize: 12, fontWeight: 700, padding: '5px 10px', borderRadius: 6 }}>🌐 {ti.language}</div>}
                           </div>
 
                           <div style={{ border: '1px solid #E6EDF3', borderRadius: 12, overflow: 'hidden' }}>
-                            {/* Photo + title + duration */}
-                            <div style={{ position: 'relative' }}>
-                              {tPhoto
-                                ? (
-                                  // eslint-disable-next-line @next/next/no-img-element
-                                  <div style={{ position: 'relative', height: 180, overflow: 'hidden' }}>
-                                    <img src={tPhoto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(10,30,60,0.75) 0%, transparent 55%)' }} />
-                                    <div style={{ position: 'absolute', bottom: 14, left: 18, right: 18 }}>
-                                      <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 20, fontWeight: 800, color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,.4)' }}>{ti.name}</div>
-                                    </div>
-                                    {ti.duration && (
-                                      <div style={{ position: 'absolute', top: 12, right: 14, background: '#16A99C', color: '#fff', fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 800, padding: '5px 11px', borderRadius: 20 }}>⏱ {ti.duration}</div>
-                                    )}
+                            {/* Photo hero or title bar */}
+                            {tPhoto ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <div style={{ position: 'relative', height: 180, overflow: 'hidden' }}>
+                                <img src={tPhoto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(10,30,60,0.8) 0%, transparent 55%)' }} />
+                                <div style={{ position: 'absolute', bottom: 14, left: 18, right: 18 }}>
+                                  <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 20, fontWeight: 800, color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,.4)' }}>{ti.name}</div>
+                                </div>
+                                {ti.duration && (
+                                  <div style={{ position: 'absolute', top: 12, right: 14, background: '#16A99C', color: '#fff', fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 800, padding: '5px 11px', borderRadius: 20 }}>⏱ {ti.duration}</div>
+                                )}
+                              </div>
+                            ) : (
+                              <div style={{ padding: '16px 18px', borderBottom: '1px solid #EDF1F5', display: 'flex', alignItems: 'center', gap: 14 }}>
+                                <div style={{ flex: 1 }}>
+                                  <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 18, fontWeight: 800, color: '#15293F' }}>{ti.name}</div>
+                                </div>
+                                {ti.duration && (
+                                  <div style={{ background: '#E6F9F7', borderRadius: 10, padding: '8px 14px', textAlign: 'center', flexShrink: 0 }}>
+                                    <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 15, fontWeight: 800, color: '#16A99C' }}>{ti.duration}</div>
+                                    <div style={{ fontSize: 10, color: '#8896A6', letterSpacing: '.06em' }}>DURACIÓN</div>
                                   </div>
-                                ) : (
-                                  <div style={{ padding: '16px 18px', borderBottom: '1px solid #EDF1F5', display: 'flex', alignItems: 'center', gap: 14 }}>
-                                    <div style={{ flex: 1 }}>
-                                      <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 18, fontWeight: 800, color: '#15293F' }}>{ti.name}</div>
-                                    </div>
-                                    {ti.duration && (
-                                      <div style={{ background: '#E6F9F7', borderRadius: 10, padding: '8px 14px', textAlign: 'center', flexShrink: 0 }}>
-                                        <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 15, fontWeight: 800, color: '#16A99C' }}>{ti.duration}</div>
-                                        <div style={{ fontSize: 10, color: '#8896A6', letterSpacing: '.06em' }}>DURACIÓN</div>
-                                      </div>
-                                    )}
-                                  </div>
-                                )
-                              }
-                            </div>
+                                )}
+                              </div>
+                            )}
 
                             {/* Description */}
                             {ti.description && (
@@ -2304,14 +2324,47 @@ export default function CotizadorApp() {
                               </div>
                             )}
 
-                            {/* Includes checklist */}
-                            {ti.includes && (
-                              <div style={{ padding: '12px 18px', background: '#F0FAF9' }}>
-                                <div style={{ fontSize: 10, color: '#16A99C', fontWeight: 800, letterSpacing: '.08em', marginBottom: 7 }}>✅ INCLUYE</div>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px 18px' }}>
-                                  {ti.includes.split('·').map((inc, i) => inc.trim() ? (
-                                    <span key={i} style={{ fontSize: 13, color: '#15293F', fontWeight: 500 }}>✔ {inc.trim()}</span>
-                                  ) : null)}
+                            {/* Includes + Meals */}
+                            {(ti.includes || ti.meals) && (
+                              <div style={{ padding: '12px 18px', borderBottom: (ti.entrances?.length > 0) ? '1px solid #EDF1F5' : undefined, background: '#F0FAF9' }}>
+                                {ti.includes && (
+                                  <>
+                                    <div style={{ fontSize: 10, color: '#16A99C', fontWeight: 800, letterSpacing: '.08em', marginBottom: 6 }}>✅ INCLUYE</div>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 18px', marginBottom: ti.meals ? 10 : 0 }}>
+                                      {ti.includes.split('·').map((inc, i) => inc.trim() ? (
+                                        <span key={i} style={{ fontSize: 13, color: '#15293F', fontWeight: 500 }}>✔ {inc.trim()}</span>
+                                      ) : null)}
+                                    </div>
+                                  </>
+                                )}
+                                {ti.meals && (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                                    <span style={{ fontSize: 16 }}>🍽️</span>
+                                    <span style={{ fontSize: 13, color: '#15293F', fontWeight: 600 }}>{ti.meals}</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Entrances */}
+                            {ti.entrances?.length > 0 && (
+                              <div style={{ padding: '12px 18px' }}>
+                                <div style={{ fontSize: 10, color: '#5B7186', fontWeight: 800, letterSpacing: '.08em', marginBottom: 8 }}>🎟️ ENTRADAS</div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                  {ti.entrances.map((en, ei) => (
+                                    <div key={ei} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: en.included ? '#F0FAF9' : '#FFF5F5', borderRadius: 8, padding: '8px 12px', border: `1px solid ${en.included ? '#C3EDE9' : '#F5C6C6'}` }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        <span style={{ fontSize: 16 }}>{en.included ? '✅' : '❌'}</span>
+                                        <span style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{en.name}</span>
+                                      </div>
+                                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                                        {en.included
+                                          ? <span style={{ fontSize: 12, fontWeight: 700, color: '#16A99C' }}>Incluida</span>
+                                          : <span style={{ fontSize: 12, fontWeight: 700, color: '#C0504D' }}>No incluida{en.price ? ` · ${en.price}` : ''}</span>
+                                        }
+                                      </div>
+                                    </div>
+                                  ))}
                                 </div>
                               </div>
                             )}
