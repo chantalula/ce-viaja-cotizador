@@ -2261,6 +2261,7 @@ export default function CotizadorApp() {
                             <div style={{ background: '#16A99C', color: '#fff', fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.12em', padding: '7px 14px', borderRadius: 6 }}>🗺️ TOUR</div>
                             {ti.location && <div style={{ fontSize: 13, fontWeight: 600, color: '#5B7186' }}>📍 {ti.location}</div>}
                             {ti.date && <div style={{ background: '#EEF3FB', color: '#0F3D7A', fontSize: 12, fontWeight: 700, padding: '5px 10px', borderRadius: 6 }}>📅 {ti.date}</div>}
+                            {ti.duration && <div style={{ background: '#E6F9F7', color: '#16A99C', fontSize: 12, fontWeight: 700, padding: '5px 10px', borderRadius: 6 }}>⏱ {ti.duration}</div>}
                           </div>
 
                           <div style={{ border: '1px solid #E6EDF3', borderRadius: 12, overflow: 'hidden' }}>
