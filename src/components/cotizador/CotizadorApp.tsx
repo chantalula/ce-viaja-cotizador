@@ -56,7 +56,7 @@ function newItem(type: string): QuoteItem {
   if (type === 'cruise') return { type: 'cruise', line: '', ship: '', route: '', depart: '', nights: '', cabin: '', cabinLabel: '', boardingTime: '', ports: [], promotion: '', price: 0 }
   if (type === 'tour') return { type: 'tour', name: 'Tour', location: '', date: '', duration: '', language: '', includes: '', meals: '', entrances: [], description: '', price: 0 }
   if (type === 'car') return { type: 'car', company: '', category: '', model: '', pickupLocation: '', pickupCode: '', pickupAddress: '', pickupDate: '', pickupTime: '', dropoffLocation: '', returnCode: '', returnAddress: '', returnDate: '', returnTime: '', days: '', passengers: '5', bags: '2', doors: '4', ac: 'Sí', transmission: 'Automático', protection: 'Protección Total', promotion: '', price: 0 }
-  if (type === 'insurance') return { type: 'insurance', company: '', plan: '', destination: '', startDate: '', endDate: '', days: '', coverage: '', price: 0 }
+  if (type === 'insurance') return { type: 'insurance', company: '', plan: '', insuranceType: 'Asistencia Médica', destination: '', startDate: '', endDate: '', days: '', pax: '', maxCoverage: '', cancellationAmount: '', emergencyPhone: '', policyNumber: '', coverage: '', notes: '', price: 0 }
   if (type === 'package') return { type: 'package', name: '', destination: '', startDate: '', endDate: '', duration: '', includes: '', description: '', promotion: '', price: 0 }
   if (type === 'day') return { type: 'day', number: 1, date: '', title: '' }
   return { type: 'transfer', from: '', to: '', date: '', pickupTime: '', vehicle: '', passengers: '', description: '', mode: 'Privado', price: 0 }
@@ -163,7 +163,7 @@ function normalizeItem(it: Record<string, unknown>): QuoteItem | null {
   if (it.type === 'tour') return { type: 'tour', name: (it.name as string) || 'Tour', location: (it.location as string) || '', date: (it.date as string) || '', duration: (it.duration as string) || '', language: (it.language as string) || '', includes: (it.includes as string) || '', meals: (it.meals as string) || '', entrances: Array.isArray(it.entrances) ? (it.entrances as TourEntrance[]).map(e => ({ name: e.name || '', included: Boolean(e.included), price: e.price || '' })) : [], description: (it.description as string) || '', price: parsePrice(it.price) }
   if (it.type === 'transfer') return { type: 'transfer', from: (it.from as string) || '', to: (it.to as string) || '', date: (it.date as string) || '', pickupTime: (it.pickupTime as string) || '', vehicle: (it.vehicle as string) || '', passengers: (it.passengers as string) || '', description: (it.description as string) || '', mode: (it.mode as string) || 'Privado', price: parsePrice(it.price) }
   if (it.type === 'car') return { type: 'car', company: (it.company as string) || '', category: (it.category as string) || '', model: (it.model as string) || '', pickupLocation: (it.pickupLocation as string) || '', pickupCode: (it.pickupCode as string) || '', pickupAddress: (it.pickupAddress as string) || '', pickupDate: (it.pickupDate as string) || '', pickupTime: (it.pickupTime as string) || '', dropoffLocation: (it.dropoffLocation as string) || '', returnCode: (it.returnCode as string) || '', returnAddress: (it.returnAddress as string) || '', returnDate: (it.returnDate as string) || '', returnTime: (it.returnTime as string) || '', days: (it.days as string) || '', passengers: (it.passengers as string) || '5', bags: (it.bags as string) || '2', doors: (it.doors as string) || '4', ac: (it.ac as string) || 'Sí', transmission: (it.transmission as string) || 'Automático', protection: (it.protection as string) || '', promotion: (it.promotion as string) || '', price: parsePrice(it.price) }
-  if (it.type === 'insurance') return { type: 'insurance', company: (it.company as string) || '', plan: (it.plan as string) || '', destination: (it.destination as string) || '', startDate: (it.startDate as string) || '', endDate: (it.endDate as string) || '', days: (it.days as string) || '', coverage: (it.coverage as string) || '', price: parsePrice(it.price) }
+  if (it.type === 'insurance') return { type: 'insurance', company: (it.company as string) || '', plan: (it.plan as string) || '', insuranceType: (it.insuranceType as string) || 'Asistencia Médica', destination: (it.destination as string) || '', startDate: (it.startDate as string) || '', endDate: (it.endDate as string) || '', days: (it.days as string) || '', pax: (it.pax as string) || '', maxCoverage: (it.maxCoverage as string) || '', cancellationAmount: (it.cancellationAmount as string) || '', emergencyPhone: (it.emergencyPhone as string) || '', policyNumber: (it.policyNumber as string) || '', coverage: (it.coverage as string) || '', notes: (it.notes as string) || '', price: parsePrice(it.price) }
   if (it.type === 'package') return { type: 'package', name: (it.name as string) || '', destination: (it.destination as string) || '', startDate: (it.startDate as string) || '', endDate: (it.endDate as string) || '', duration: (it.duration as string) || '', includes: (it.includes as string) || '', description: (it.description as string) || '', promotion: (it.promotion as string) || '', price: parsePrice(it.price) }
   if (it.type === 'day') return { type: 'day', number: Number(it.number) || 1, date: (it.date as string) || '', title: (it.title as string) || '' }
   return null
@@ -1847,17 +1847,37 @@ export default function CotizadorApp() {
                     const ins = item as InsuranceItem
                     return (
                       <>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9, marginBottom: 9 }}>
-                          <label><span style={labelSt}>Aseguradora</span><input value={ins.company} onChange={e => onField('items.' + idx + '.company', e.target.value)} placeholder="Assist Card, AXA, Generali…" style={inputSt} /></label>
-                          <label><span style={labelSt}>Plan</span><input value={ins.plan} onChange={e => onField('items.' + idx + '.plan', e.target.value)} placeholder="Plan Premium" style={inputSt} /></label>
-                        </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 9, marginBottom: 9 }}>
-                          <label><span style={labelSt}>Inicio</span><input value={ins.startDate} onChange={e => onField('items.' + idx + '.startDate', e.target.value)} placeholder="Lun 21 jul 2026" style={inputSt} /></label>
-                          <label><span style={labelSt}>Fin</span><input value={ins.endDate} onChange={e => onField('items.' + idx + '.endDate', e.target.value)} placeholder="Vie 1 ago 2026" style={inputSt} /></label>
-                          <label><span style={labelSt}>Días</span><input value={ins.days} onChange={e => onField('items.' + idx + '.days', e.target.value)} placeholder="12" style={inputSt} /></label>
+                          <label><span style={labelSt}>Aseguradora</span><input value={ins.company} onChange={e => onField('items.' + idx + '.company', e.target.value)} placeholder="Assist Card, AXA, Generali…" style={inputSt} /></label>
+                          <label><span style={labelSt}>Plan</span><input value={ins.plan} onChange={e => onField('items.' + idx + '.plan', e.target.value)} placeholder="Plan Premium Internacional" style={inputSt} /></label>
+                          <label><span style={labelSt}>Tipo de seguro</span>
+                            <select value={ins.insuranceType} onChange={e => onField('items.' + idx + '.insuranceType', e.target.value)} style={{ ...inputSt, cursor: 'pointer' }}>
+                              <option>Asistencia Médica</option>
+                              <option>Cancelación</option>
+                              <option>Asistencia Médica y Cancelación</option>
+                              <option>Seguro Integral</option>
+                              <option>Multiviaje Anual</option>
+                            </select>
+                          </label>
                         </div>
-                        <label style={{ display: 'block' }}><span style={labelSt}>Destino</span><input value={ins.destination} onChange={e => onField('items.' + idx + '.destination', e.target.value)} placeholder="Europa, Worldwide, USA…" style={inputSt} /></label>
-                        <label style={{ display: 'block', marginTop: 9 }}><span style={labelSt}>Coberturas incluidas</span><input value={ins.coverage} onChange={e => onField('items.' + idx + '.coverage', e.target.value)} placeholder="Médica, cancelación, equipaje, responsabilidad civil…" style={inputSt} /></label>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.2fr 0.5fr 0.7fr 1fr', gap: 9, marginBottom: 9 }}>
+                          <label><span style={labelSt}>Inicio</span><input value={ins.startDate} onChange={e => onField('items.' + idx + '.startDate', e.target.value)} placeholder="Jue 3 sep 2026" style={inputSt} /></label>
+                          <label><span style={labelSt}>Fin</span><input value={ins.endDate} onChange={e => onField('items.' + idx + '.endDate', e.target.value)} placeholder="Vie 11 sep 2026" style={inputSt} /></label>
+                          <label><span style={labelSt}>Días</span><input value={ins.days} onChange={e => onField('items.' + idx + '.days', e.target.value)} placeholder="9" style={inputSt} /></label>
+                          <label><span style={labelSt}>Asegurados</span><input value={ins.pax} onChange={e => onField('items.' + idx + '.pax', e.target.value)} placeholder="2" style={inputSt} /></label>
+                          <label><span style={labelSt}>Precio (USD)</span><input value={ins.price || ''} onChange={e => onField('items.' + idx + '.price', parseFloat(e.target.value) || 0)} type="number" placeholder="0.00" style={{ ...inputSt, fontWeight: 700, color: '#0F3D7A' }} /></label>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: 9, marginBottom: 9 }}>
+                          <label><span style={labelSt}>Destino</span><input value={ins.destination} onChange={e => onField('items.' + idx + '.destination', e.target.value)} placeholder="Europa, Worldwide, USA…" style={inputSt} /></label>
+                          <label><span style={labelSt}>Cobertura médica máxima</span><input value={ins.maxCoverage} onChange={e => onField('items.' + idx + '.maxCoverage', e.target.value)} placeholder="$50,000 USD" style={inputSt} /></label>
+                          <label><span style={labelSt}>Monto de cancelación</span><input value={ins.cancellationAmount} onChange={e => onField('items.' + idx + '.cancellationAmount', e.target.value)} placeholder="$3,000 USD" style={inputSt} /></label>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9, marginBottom: 9 }}>
+                          <label><span style={labelSt}>Teléfono de emergencias</span><input value={ins.emergencyPhone} onChange={e => onField('items.' + idx + '.emergencyPhone', e.target.value)} placeholder="+1 800 000 0000" style={{ ...inputSt, fontWeight: 700 }} /></label>
+                          <label><span style={labelSt}>Número de póliza</span><input value={ins.policyNumber} onChange={e => onField('items.' + idx + '.policyNumber', e.target.value)} placeholder="AC-2026-000000" style={inputSt} /></label>
+                        </div>
+                        <label style={{ display: 'block', marginBottom: 9 }}><span style={labelSt}>Coberturas incluidas</span><input value={ins.coverage} onChange={e => onField('items.' + idx + '.coverage', e.target.value)} placeholder="Gastos médicos · Cancelación · Equipaje · Responsabilidad civil · Evacuación" style={inputSt} /></label>
+                        <label style={{ display: 'block' }}><span style={labelSt}>Información adicional (opcional)</span><textarea value={ins.notes} onChange={e => onField('items.' + idx + '.notes', e.target.value)} placeholder="Información importante, condiciones, exclusiones u otras notas para el cliente…" rows={2} style={{ ...inputSt, width: '100%', resize: 'vertical', boxSizing: 'border-box' }} /></label>
                       </>
                     )
                   })()}
@@ -2450,21 +2470,75 @@ export default function CotizadorApp() {
                       const ins = item as InsuranceItem
                       return (
                         <>
-                          <div style={{ marginBottom: 13, display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <div style={{ background: '#1A6B3C', color: '#fff', fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.12em', padding: '7px 14px', borderRadius: 6 }}>SEGURO DE VIAJE</div>
+                          {/* Header */}
+                          <div style={{ marginBottom: 13, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                            <div style={{ background: '#1A6B3C', color: '#fff', fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.12em', padding: '7px 14px', borderRadius: 6 }}>🛡️ SEGURO DE VIAJE</div>
+                            {ins.insuranceType && <div style={{ background: '#E8F5EE', color: '#1A6B3C', fontSize: 12, fontWeight: 700, padding: '5px 10px', borderRadius: 6 }}>{ins.insuranceType}</div>}
                             {ins.company && <div style={{ fontSize: 13, fontWeight: 700, color: '#1A6B3C' }}>{ins.company}</div>}
+                            {ins.policyNumber && <div style={{ background: '#EEF3FB', color: '#0F3D7A', fontSize: 11, fontWeight: 700, padding: '4px 9px', borderRadius: 5 }}>Póliza: {ins.policyNumber}</div>}
                           </div>
-                          <div style={{ border: '1px solid #D1E8D8', borderRadius: 10, overflow: 'hidden' }}>
-                            <div style={{ background: '#F0FAF3', padding: '10px 16px', borderBottom: '1px solid #D1E8D8' }}>
-                              <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 15, fontWeight: 800, color: '#1A6B3C' }}>{ins.plan}</div>
-                              {ins.destination && <div style={{ fontSize: 12, color: '#5B7186', marginTop: 2 }}>Destino: {ins.destination}</div>}
+
+                          <div style={{ border: '1px solid #C3EDE9', borderRadius: 12, overflow: 'hidden' }}>
+                            {/* Plan + destination + coverage amounts */}
+                            <div style={{ background: 'linear-gradient(135deg, #1A6B3C 0%, #16A99C 100%)', padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                              <div style={{ flex: 1 }}>
+                                {ins.plan && <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 18, fontWeight: 800, color: '#fff' }}>{ins.plan}</div>}
+                                {ins.destination && <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 3 }}>📍 {ins.destination}</div>}
+                              </div>
+                              <div style={{ display: 'flex', gap: 10 }}>
+                                {ins.maxCoverage && (
+                                  <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.15)', borderRadius: 10, padding: '8px 14px' }}>
+                                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', letterSpacing: '.06em', marginBottom: 2 }}>COBERTURA MÉDICA</div>
+                                    <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 15, fontWeight: 800, color: '#fff' }}>{ins.maxCoverage}</div>
+                                  </div>
+                                )}
+                                {ins.cancellationAmount && (
+                                  <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.15)', borderRadius: 10, padding: '8px 14px' }}>
+                                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', letterSpacing: '.06em', marginBottom: 2 }}>CANCELACIÓN</div>
+                                    <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 15, fontWeight: 800, color: '#fff' }}>{ins.cancellationAmount}</div>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            <div style={{ padding: '12px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px 16px' }}>
-                              {ins.startDate && <div><div style={{ fontSize: 10, color: '#9AA8B8' }}>INICIO</div><div style={{ fontSize: 12, fontWeight: 600, color: '#15293F' }}>{ins.startDate}</div></div>}
-                              {ins.endDate && <div><div style={{ fontSize: 10, color: '#9AA8B8' }}>FIN</div><div style={{ fontSize: 12, fontWeight: 600, color: '#15293F' }}>{ins.endDate}</div></div>}
-                              {ins.days && <div><div style={{ fontSize: 10, color: '#9AA8B8' }}>DÍAS</div><div style={{ fontSize: 12, fontWeight: 600, color: '#15293F' }}>{ins.days} días</div></div>}
-                              {ins.coverage && <div style={{ gridColumn: 'span 3' }}><div style={{ fontSize: 10, color: '#9AA8B8' }}>COBERTURAS</div><div style={{ fontSize: 12, fontWeight: 600, color: '#15293F' }}>{ins.coverage}</div></div>}
+
+                            {/* Emergency phone — highlighted */}
+                            {ins.emergencyPhone && (
+                              <div style={{ background: '#FFF8E6', borderBottom: '1px solid #F5E0A0', padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                                <span style={{ fontSize: 22 }}>🆘</span>
+                                <div>
+                                  <div style={{ fontSize: 10, color: '#856404', fontWeight: 800, letterSpacing: '.08em', marginBottom: 2 }}>LÍNEA DE EMERGENCIAS 24/7</div>
+                                  <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 20, fontWeight: 800, color: '#856404', letterSpacing: '.04em' }}>{ins.emergencyPhone}</div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Dates + pax */}
+                            <div style={{ padding: '12px 18px', borderBottom: '1px solid #E6EDF3', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '8px 14px' }}>
+                              {ins.startDate && <div><div style={{ fontSize: 10, color: '#9AA8B8', letterSpacing: '.06em' }}>INICIO</div><div style={{ fontSize: 13, fontWeight: 700, color: '#15293F' }}>{ins.startDate}</div></div>}
+                              {ins.endDate && <div><div style={{ fontSize: 10, color: '#9AA8B8', letterSpacing: '.06em' }}>FIN</div><div style={{ fontSize: 13, fontWeight: 700, color: '#15293F' }}>{ins.endDate}</div></div>}
+                              {ins.days && <div><div style={{ fontSize: 10, color: '#9AA8B8', letterSpacing: '.06em' }}>DÍAS</div><div style={{ fontSize: 13, fontWeight: 700, color: '#15293F' }}>{ins.days} días</div></div>}
+                              {ins.pax && <div><div style={{ fontSize: 10, color: '#9AA8B8', letterSpacing: '.06em' }}>ASEGURADOS</div><div style={{ fontSize: 13, fontWeight: 700, color: '#15293F' }}>{ins.pax} {parseInt(ins.pax) === 1 ? 'persona' : 'personas'}</div></div>}
                             </div>
+
+                            {/* Coverage checklist */}
+                            {ins.coverage && (
+                              <div style={{ padding: '12px 18px', borderBottom: ins.notes ? '1px solid #E6EDF3' : undefined, background: '#F4FBF7' }}>
+                                <div style={{ fontSize: 10, color: '#1A6B3C', fontWeight: 800, letterSpacing: '.08em', marginBottom: 8 }}>✅ COBERTURAS INCLUIDAS</div>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 20px' }}>
+                                  {ins.coverage.split('·').map((cov, i) => cov.trim() ? (
+                                    <span key={i} style={{ fontSize: 13, color: '#15293F', fontWeight: 500 }}>🛡 {cov.trim()}</span>
+                                  ) : null)}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Notes */}
+                            {ins.notes && (
+                              <div style={{ padding: '12px 18px', background: '#FAFCFE' }}>
+                                <div style={{ fontSize: 10, color: '#5B7186', fontWeight: 800, letterSpacing: '.08em', marginBottom: 6 }}>ℹ️ INFORMACIÓN ADICIONAL</div>
+                                <div style={{ fontSize: 12, color: '#5B7186', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{ins.notes}</div>
+                              </div>
+                            )}
                           </div>
                         </>
                       )

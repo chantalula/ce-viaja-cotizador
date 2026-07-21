@@ -153,11 +153,18 @@ export interface InsuranceItem {
   type: 'insurance'
   company: string
   plan: string
+  insuranceType: string
   destination: string
   startDate: string
   endDate: string
   days: string
+  pax: string
+  maxCoverage: string
+  cancellationAmount: string
+  emergencyPhone: string
+  policyNumber: string
   coverage: string
+  notes: string
   price: number
 }
 

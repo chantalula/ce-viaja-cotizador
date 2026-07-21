@@ -17,6 +17,7 @@ TOUR: {"type":"tour","name":"","location":"","date":"","duration":"","language":
 TRASLADO: {"type":"transfer","from":"","to":"","date":"","pickupTime":"","vehicle":"","passengers":"","description":"","mode":"Privado","price":0}
 CARRO: {"type":"car","company":"","category":"","model":"","pickupLocation":"","pickupCode":"","pickupAddress":"","pickupDate":"","pickupTime":"","dropoffLocation":"","returnCode":"","returnAddress":"","returnDate":"","returnTime":"","days":"","passengers":"5","bags":"2","doors":"4","ac":"Sí","transmission":"Automático","protection":"","promotion":"","price":0}
 PAQUETE: {"type":"package","name":"","destination":"","startDate":"","endDate":"","duration":"","includes":"","description":"","promotion":"","price":0}
+SEGURO: {"type":"insurance","company":"","plan":"","insuranceType":"Asistencia Médica","destination":"","startDate":"","endDate":"","days":"","pax":"","maxCoverage":"","cancellationAmount":"","emergencyPhone":"","policyNumber":"","coverage":"","notes":"","price":0}
 
 Reglas por tipo:
 - DÍA: Para itinerarios organizados por días, inserta un item DÍA antes de cada grupo de actividades del mismo día. "number"=número del día en el itinerario (1, 2, 3…), "date"=fecha del día en español corto (ej: "Mar 15 jul 2025"), "title"=descripción corta del día (ej: "Llegada a Cancún", "Día libre en París", "Excursión a Chichen Itzá", "Regreso"). Esto es OBLIGATORIO para documentos de paquetes o itinerarios multi-día: cada día debe tener su encabezado DÍA seguido de todos sus servicios (vuelos, traslados, hotel, tours, etc.).
@@ -36,6 +37,7 @@ Reglas por tipo:
 - Horas en 24h. AM/PM: 12AM→00, 1AM→01…11AM→11, 12PM→12, 1PM→13…11PM→23.
 - "Economy"/"Turista"="Económica"; "Business"="Ejecutiva".
 - Alianzas — Star Alliance: UA,LH,AC,SQ,NH,TK,LX,OS,TP,LO,AV,CM,ET,MS,BR,CA,AI,NZ,OZ,SK,ZH,SA,A3,OU,HO. SkyTeam: DL,AF,KL,KE,MU,CZ,AM,AZ,VN,UX,ME,GA,KQ,RO,MF,OK. oneworld: AA,BA,IB,CX,QF,JL,AY,QR,MH,RJ,AT,AS,UL,FJ. Sin alianza (pon "—"): LA,FR,U2,WS,B6,NK,F9,Y4,VB,P5,DM,H2,FO,AD,G3,WN,G4,SY,WG,BW,V0,PY,TS.
+- SEGURO: "company"=nombre de la aseguradora, "plan"=nombre del plan, "insuranceType"="Asistencia Médica"|"Cancelación"|"Asistencia Médica y Cancelación"|"Seguro Integral"|"Multiviaje Anual", "destination"=zona de cobertura, "startDate"/"endDate"=fechas de vigencia, "days"=días de cobertura, "pax"=número de asegurados, "maxCoverage"=monto máximo de cobertura médica (ej: "$50,000 USD"), "cancellationAmount"=monto de cobertura por cancelación si aplica, "emergencyPhone"=número de emergencias 24h, "policyNumber"=número de póliza o voucher, "coverage"=lista de coberturas separadas por · (ej: "Gastos médicos · Cancelación · Pérdida de equipaje · Responsabilidad civil"), "notes"=condiciones importantes o exclusiones relevantes, "price"=precio total.
 - Fechas en español corto: "Jue 21 may 2026". Deja "" o 0 lo que no aparezca.
 - En segmentos de vuelo, "duration" déjalo "" salvo que aparezca explícita en el documento (ej: "9h 45m").`
 
