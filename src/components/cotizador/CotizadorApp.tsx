@@ -2485,20 +2485,12 @@ export default function CotizadorApp() {
                                 {ins.plan && <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 18, fontWeight: 800, color: '#fff' }}>{ins.plan}</div>}
                                 {ins.destination && <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 3 }}>📍 {ins.destination}</div>}
                               </div>
-                              <div style={{ display: 'flex', gap: 10 }}>
-                                {ins.maxCoverage && (
-                                  <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.15)', borderRadius: 10, padding: '8px 14px' }}>
-                                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', letterSpacing: '.06em', marginBottom: 2 }}>COBERTURA MÉDICA</div>
-                                    <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 15, fontWeight: 800, color: '#fff' }}>{ins.maxCoverage}</div>
-                                  </div>
-                                )}
-                                {ins.cancellationAmount && (
-                                  <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.15)', borderRadius: 10, padding: '8px 14px' }}>
-                                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', letterSpacing: '.06em', marginBottom: 2 }}>CANCELACIÓN</div>
-                                    <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 15, fontWeight: 800, color: '#fff' }}>{ins.cancellationAmount}</div>
-                                  </div>
-                                )}
-                              </div>
+                              {ins.maxCoverage && (
+                                <div style={{ textAlign: 'center', background: 'rgba(255,255,255,0.15)', borderRadius: 10, padding: '8px 14px', flexShrink: 0 }}>
+                                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', letterSpacing: '.06em', marginBottom: 2 }}>COBERTURA MÉDICA</div>
+                                  <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 15, fontWeight: 800, color: '#fff' }}>{ins.maxCoverage}</div>
+                                </div>
+                              )}
                             </div>
 
                             {/* Emergency phone — highlighted */}
@@ -2511,6 +2503,13 @@ export default function CotizadorApp() {
                                 </div>
                               </div>
                             )}
+
+                            {/* Type + amounts row */}
+                            <div style={{ padding: '10px 18px', borderBottom: '1px solid #E6EDF3', background: '#F4FBF7', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                              {ins.insuranceType && <div style={{ background: '#1A6B3C', color: '#fff', fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 20, letterSpacing: '.06em' }}>{ins.insuranceType}</div>}
+                              {ins.maxCoverage && <div style={{ fontSize: 13, color: '#15293F' }}>💊 Cobertura médica: <strong>{ins.maxCoverage}</strong></div>}
+                              {ins.cancellationAmount && <div style={{ fontSize: 13, color: '#15293F' }}>✈️ Cancelación: <strong>{ins.cancellationAmount}</strong></div>}
+                            </div>
 
                             {/* Dates + pax */}
                             <div style={{ padding: '12px 18px', borderBottom: '1px solid #E6EDF3', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '8px 14px' }}>
