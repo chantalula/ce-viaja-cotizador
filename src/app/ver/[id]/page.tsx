@@ -70,10 +70,11 @@ export default function VerCotizacion() {
 
   const seller = SELLERS[quote.sellerIndex] || SELLERS[0]
   const paxCount = (quote.pax || []).length
-  const adultoCount = (quote.pax || []).filter(p => p.type === 'Adulto').length
-  const ninoCount   = (quote.pax || []).filter(p => p.type === 'Niño').length
-  const jubCount    = (quote.pax || []).filter(p => p.type === 'Jubilado').length
-  const total = adultoCount * (quote.priceAdulto || 0) + ninoCount * (quote.priceNino || 0) + jubCount * (quote.priceJubilado || 0)
+  const adultoCount  = (quote.pax || []).filter(p => p.type === 'Adulto').length
+  const ninoCount    = (quote.pax || []).filter(p => p.type === 'Niño').length
+  const jubCount     = (quote.pax || []).filter(p => p.type === 'Jubilado').length
+  const infanteCount = (quote.pax || []).filter(p => p.type === 'Infante').length
+  const total = adultoCount * (quote.priceAdulto || 0) + ninoCount * (quote.priceNino || 0) + jubCount * (quote.priceJubilado || 0) + infanteCount * (quote.priceInfante || 0)
   const perPax = paxCount > 0 ? total / paxCount : total
   const totalFmt = money(total, quote.currency)
   const perPaxFmt = money(perPax, quote.currency)
@@ -81,10 +82,15 @@ export default function VerCotizacion() {
   const paxSummary = (() => {
     const c: Record<string, number> = {}
     ;(quote.pax || []).forEach(p => { c[p.type] = (c[p.type] || 0) + 1 })
-    return Object.entries(c).map(([t, n]) => `${n} ${t.toLowerCase()}${n > 1 && t === 'Adulto' ? 's' : ''}`).join(', ')
+    const parts: string[] = []
+    if (c['Adulto']) parts.push(c['Adulto'] + (c['Adulto'] === 1 ? ' adulto' : ' adultos'))
+    if (c['Niño']) parts.push(c['Niño'] + (c['Niño'] === 1 ? ' niño' : ' niños'))
+    if (c['Jubilado']) parts.push(c['Jubilado'] + (c['Jubilado'] === 1 ? ' jubilado' : ' jubilados'))
+    if (c['Infante']) parts.push(c['Infante'] + (c['Infante'] === 1 ? ' infante' : ' infantes'))
+    return parts.join(' · ')
   })()
   const cabinSummary = [...new Set((quote.pax || []).map(p => p.cabin))].join(' / ')
-  const PAX_CODE: Record<string, string> = { Adulto: 'ADT', Niño: 'CHD', Jubilado: 'SRC', Infante: 'INF' }
+  const PAX_CODE: Record<string, string> = { Adulto: 'ADT', Niño: 'CHD', Jubilado: 'JUB', Infante: 'INF' }
 
   return (
     <div style={{ minHeight: '100vh', background: '#e7e5df', padding: '32px 16px', fontFamily: 'Manrope, sans-serif' }}>
