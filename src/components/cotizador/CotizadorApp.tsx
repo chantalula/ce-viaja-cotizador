@@ -265,8 +265,47 @@ export default function CotizadorApp() {
     router.push('/login')
   }
 
-  // Core state
-  const [quote, setQuote] = useState<QuoteDoc>(seed)
+  // Core state — with undo/redo history
+  const [quote, setQuoteRaw] = useState<QuoteDoc>(seed)
+  const histRef    = useRef<QuoteDoc[]>([seed()])
+  const histIdx    = useRef(0)
+  const histDeb    = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const [, setHistVer] = useState(0)
+  const canUndo = histIdx.current > 0
+  const canRedo = histIdx.current < histRef.current.length - 1
+
+  function setQuote(updater: QuoteDoc | ((prev: QuoteDoc) => QuoteDoc)) {
+    setQuoteRaw(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater
+      clearTimeout(histDeb.current)
+      histDeb.current = setTimeout(() => {
+        const sliced = histRef.current.slice(0, histIdx.current + 1)
+        sliced.push(JSON.parse(JSON.stringify(next)))
+        if (sliced.length > 50) sliced.shift()
+        histRef.current = sliced
+        histIdx.current = sliced.length - 1
+        setHistVer(v => v + 1)
+      }, 800)
+      return next
+    })
+  }
+
+  const undoFnRef = useRef(() => {})
+  const redoFnRef = useRef(() => {})
+  undoFnRef.current = () => {
+    clearTimeout(histDeb.current)
+    if (histIdx.current <= 0) return
+    histIdx.current--
+    setQuoteRaw(histRef.current[histIdx.current])
+    setHistVer(v => v + 1)
+  }
+  redoFnRef.current = () => {
+    clearTimeout(histDeb.current)
+    if (histIdx.current >= histRef.current.length - 1) return
+    histIdx.current++
+    setQuoteRaw(histRef.current[histIdx.current])
+    setHistVer(v => v + 1)
+  }
   const [savedQuotes, setSavedQuotes] = useState<SavedQuote[]>([])
   const [clients, setClients] = useState<CRMClient[]>([])
   const [hotelPhotos, setHotelPhotos] = useState<Record<string, string>>({})
@@ -319,6 +358,19 @@ export default function CotizadorApp() {
   const [confirmClient, setConfirmClient] = useState<{
     name: string; phone: string; email: string; passport: string; exists: boolean; existingId?: string
   } | null>(null)
+
+  // ── Keyboard undo/redo (Cmd+Z / Cmd+Shift+Z) — skip when focus is in an input ─
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (!e.metaKey && !e.ctrlKey) return
+      const tag = (e.target as HTMLElement).tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement).isContentEditable) return
+      if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); undoFnRef.current() }
+      if ((e.key === 'z' && e.shiftKey) || e.key === 'Z') { e.preventDefault(); redoFnRef.current() }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   // ── Load data ────────────────────────────────────────────────────────────────
 
@@ -415,12 +467,12 @@ export default function CotizadorApp() {
       fresh.number = fmtNum(data.value)
       fresh.sellerIndex = quote.sellerIndex
       setQuote(fresh)
-      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({}); setTransferPhotos({}); setTourPhotos({})
+      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({}); setTransferPhotos({}); setTourPhotos({}); setCruisePhotos({}); setShipAutoPhoto({})
     } catch {
       const fresh = seed()
       fresh.sellerIndex = quote.sellerIndex
       setQuote(fresh)
-      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({}); setTransferPhotos({}); setTourPhotos({})
+      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({}); setTransferPhotos({}); setTourPhotos({}); setCruisePhotos({}); setShipAutoPhoto({})
     }
   }
 
@@ -467,7 +519,7 @@ export default function CotizadorApp() {
     const r = savedQuotes.find(x => x.id === id)
     if (r) {
       setQuote(JSON.parse(JSON.stringify(r.quote)))
-      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({}); setTransferPhotos({}); setTourPhotos({})
+      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({}); setTransferPhotos({}); setTourPhotos({}); setCruisePhotos({}); setShipAutoPhoto({})
       setShowDB(false)
     }
   }
@@ -476,7 +528,7 @@ export default function CotizadorApp() {
     const r = savedQuotes.find(x => x.id === id)
     if (!r) return
     setQuote(JSON.parse(JSON.stringify(r.quote)))
-    setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({}); setTransferPhotos({}); setTourPhotos({})
+    setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({}); setTransferPhotos({}); setTourPhotos({}); setCruisePhotos({}); setShipAutoPhoto({})
     setShowDB(false)
     // Wait one frame for the doc to render, then generate PDF
     await new Promise(res => setTimeout(res, 600))
@@ -492,7 +544,7 @@ export default function CotizadorApp() {
       const q: QuoteDoc = JSON.parse(JSON.stringify(r.quote))
       q.number = fmtNum(data.value)
       setQuote(q)
-      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({}); setTransferPhotos({}); setTourPhotos({})
+      setHotelPhotos({}); setCarPhotos({}); setPackagePhotos({}); setTransferPhotos({}); setTourPhotos({}); setCruisePhotos({}); setShipAutoPhoto({})
       setShowDB(false)
       showToast('Cotización duplicada')
     } catch {
@@ -723,6 +775,10 @@ export default function CotizadorApp() {
           if (item.type === 'transfer') {
             const tr = item as TransferItem
             if (tr.vehicle) fetchTransferPhoto(tr.vehicle, idx)
+          }
+          if (item.type === 'tour') {
+            const ti = item as TourItem
+            if (ti.name || ti.location) fetchTourPhoto(ti.name, ti.location, idx)
           }
         })
         return updated
@@ -1137,6 +1193,63 @@ export default function CotizadorApp() {
       else if (act === 'removePax') clone.pax.splice(idx, 1)
       return clone
     })
+    // Sync photo states when items are removed or reordered
+    if (act === 'remove') {
+      const ri = idx
+      const shiftRec = (prev: Record<string, string>, re: RegExp, newKey: (ki: number, m: RegExpMatchArray) => string): Record<string, string> => {
+        const next: Record<string, string> = {}
+        for (const [k, v] of Object.entries(prev)) {
+          const m = k.match(re)
+          if (!m) { next[k] = v; continue }
+          const ki = parseInt(m[1])
+          if (ki === ri) continue
+          next[ki > ri ? newKey(ki - 1, m) : k] = v
+        }
+        return next
+      }
+      setHotelPhotos(p => shiftRec(p, /^h(\d+)-(.+)$/, (ki, m) => `h${ki}-${m[2]}`))
+      setCarPhotos(p => shiftRec(p, /^car(\d+)-photo$/, ki => `car${ki}-photo`))
+      setTransferPhotos(p => shiftRec(p, /^tr(\d+)-photo$/, ki => `tr${ki}-photo`))
+      setTourPhotos(p => shiftRec(p, /^tour(\d+)-photo$/, ki => `tour${ki}-photo`))
+      setCruisePhotos(p => shiftRec(p, /^cr(\d+)-(.+)$/, (ki, m) => `cr${ki}-${m[2]}`))
+      setShipAutoPhoto(p => shiftRec(p, /^(\d+)-(.+)$/, (ki, m) => `${ki}-${m[2]}`))
+      setPackagePhotos(prev => {
+        const next: Record<string, string[]> = {}
+        for (const [k, v] of Object.entries(prev)) {
+          const m = k.match(/^pkg(\d+)$/)
+          if (!m) { next[k] = v; continue }
+          const ki = parseInt(m[1])
+          if (ki === ri) continue
+          next[ki > ri ? `pkg${ki - 1}` : k] = v
+        }
+        return next
+      })
+    } else if ((act === 'up' && idx > 0) || (act === 'down' && idx < quote.items.length - 1)) {
+      const [a, b] = act === 'up' ? [idx - 1, idx] : [idx, idx + 1]
+      const swapRec = (prev: Record<string, string>, ka: string, kb: string): Record<string, string> => {
+        const next = { ...prev }
+        const va = next[ka], vb = next[kb]
+        if (va !== undefined) next[kb] = va; else delete next[kb]
+        if (vb !== undefined) next[ka] = vb; else delete next[ka]
+        return next
+      }
+      for (const s of ['-p1', '-p2', '-map']) setHotelPhotos(p => swapRec(p, `h${a}${s}`, `h${b}${s}`))
+      setCarPhotos(p => swapRec(p, `car${a}-photo`, `car${b}-photo`))
+      setTransferPhotos(p => swapRec(p, `tr${a}-photo`, `tr${b}-photo`))
+      setTourPhotos(p => swapRec(p, `tour${a}-photo`, `tour${b}-photo`))
+      for (const s of ['-ext', '-cabin']) {
+        setCruisePhotos(p => swapRec(p, `cr${a}${s}`, `cr${b}${s}`))
+        setShipAutoPhoto(p => swapRec(p, `${a}${s}`, `${b}${s}`))
+      }
+      setPackagePhotos(prev => {
+        const next = { ...prev }
+        const ka = `pkg${a}`, kb = `pkg${b}`
+        const va = next[ka], vb = next[kb]
+        if (va !== undefined) next[kb] = va; else delete next[kb]
+        if (vb !== undefined) next[ka] = vb; else delete next[ka]
+        return next
+      })
+    }
   }
 
   function onClientName(v: string) {
@@ -1180,6 +1293,7 @@ export default function CotizadorApp() {
     const parts: string[] = []
     if (c['Adulto']) parts.push(c['Adulto'] + (c['Adulto'] === 1 ? ' adulto' : ' adultos'))
     if (c['Niño']) parts.push(c['Niño'] + (c['Niño'] === 1 ? ' niño' : ' niños'))
+    if (c['Jubilado']) parts.push(c['Jubilado'] + (c['Jubilado'] === 1 ? ' jubilado' : ' jubilados'))
     if (c['Infante']) parts.push(c['Infante'] + (c['Infante'] === 1 ? ' infante' : ' infantes'))
     return parts.join(' · ') || (hasHotel ? 'Sin huéspedes' : 'Sin pasajeros')
   })()
@@ -1384,6 +1498,19 @@ export default function CotizadorApp() {
           <img src="/logo.jpg" alt="CE Viaja" style={{ height: 34, display: 'block' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
           <div style={{ width: 1, height: 26, background: '#E6ECF2' }} />
           <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 13, fontWeight: 700, color: '#0F3D7A', letterSpacing: '.04em' }}>Cotizador</div>
+          <div style={{ width: 1, height: 26, background: '#E6ECF2' }} />
+          <button
+            onClick={() => undoFnRef.current()}
+            disabled={!canUndo}
+            title="Deshacer (⌘Z)"
+            style={{ border: '1px solid #D8E0E8', background: canUndo ? '#fff' : '#F4F7FA', color: canUndo ? '#15293F' : '#B0BCCC', borderRadius: 8, width: 34, height: 34, cursor: canUndo ? 'pointer' : 'default', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+          >↩</button>
+          <button
+            onClick={() => redoFnRef.current()}
+            disabled={!canRedo}
+            title="Rehacer (⌘⇧Z)"
+            style={{ border: '1px solid #D8E0E8', background: canRedo ? '#fff' : '#F4F7FA', color: canRedo ? '#15293F' : '#B0BCCC', borderRadius: 8, width: 34, height: 34, cursor: canRedo ? 'pointer' : 'default', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+          >↪</button>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button

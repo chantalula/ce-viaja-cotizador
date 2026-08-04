@@ -3,12 +3,23 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET() {
   const supabase = createClient()
-  const { data, error } = await supabase
-    .from('cotizador_clients')
-    .select('*')
-    .order('created_at', { ascending: false })
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+  const all: unknown[] = []
+  const PAGE = 1000
+
+  for (let page = 0; ; page++) {
+    const from = page * PAGE
+    const { data, error } = await supabase
+      .from('cotizador_clients')
+      .select('*')
+      .order('name', { ascending: true })
+      .range(from, from + PAGE - 1)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (!data || data.length === 0) break
+    all.push(...data)
+    if (data.length < PAGE) break
+  }
+
+  return NextResponse.json(all)
 }
 
 export async function POST(req: NextRequest) {

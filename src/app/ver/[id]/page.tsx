@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import type { QuoteDoc, FlightItem, HotelItem, CruiseItem, TourItem, TransferItem, Segment } from '@/lib/cotizador/types'
+import type { QuoteDoc, FlightItem, HotelItem, CruiseItem, TourItem, TransferItem, CarItem, InsuranceItem, PackageItem, DayItem, TourEntrance, Segment } from '@/lib/cotizador/types'
 import { calcFlightDuration } from '@/lib/cotizador/flightDuration'
 
 const SELLERS = [
@@ -215,11 +215,30 @@ export default function VerCotizacion() {
                   const ti = item as TourItem
                   return (
                     <>
-                      <div style={{ marginBottom: 13 }}><div style={{ background: '#16A99C', color: '#fff', fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.12em', padding: '7px 14px', borderRadius: 6, display: 'inline-block' }}>TOUR · {ti.name}</div></div>
-                      <div style={{ border: '1px solid #E6EDF3', borderRadius: 10, padding: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '11px 16px' }}>
-                        <div><div style={{ fontSize: 11, color: '#9AA8B8' }}>LUGAR</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{ti.location}</div></div>
-                        <div><div style={{ fontSize: 11, color: '#9AA8B8' }}>FECHA · DURACIÓN</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{ti.date} · {ti.duration}</div></div>
-                        <div style={{ gridColumn: 'span 2' }}><div style={{ fontSize: 11, color: '#9AA8B8' }}>INCLUYE</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{ti.includes}</div></div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 13 }}>
+                        <div style={{ background: '#16A99C', color: '#fff', fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.12em', padding: '7px 14px', borderRadius: 6 }}>TOUR · {ti.name}</div>
+                        {ti.duration && <div style={{ fontSize: 12, color: '#5B7186', fontWeight: 700 }}>⏱ {ti.duration}</div>}
+                      </div>
+                      <div style={{ border: '1px solid #E6EDF3', borderRadius: 10, overflow: 'hidden' }}>
+                        <div style={{ padding: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '11px 16px' }}>
+                          <div><div style={{ fontSize: 11, color: '#9AA8B8' }}>LUGAR</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{ti.location}</div></div>
+                          <div><div style={{ fontSize: 11, color: '#9AA8B8' }}>FECHA</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{ti.date}</div></div>
+                          {ti.language && <div><div style={{ fontSize: 11, color: '#9AA8B8' }}>IDIOMA</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{ti.language}</div></div>}
+                          {ti.meals && <div><div style={{ fontSize: 11, color: '#9AA8B8' }}>COMIDAS</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{ti.meals}</div></div>}
+                          {ti.includes && <div style={{ gridColumn: 'span 2' }}><div style={{ fontSize: 11, color: '#9AA8B8' }}>INCLUYE</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{ti.includes}</div></div>}
+                          {ti.description && <div style={{ gridColumn: 'span 2' }}><div style={{ fontSize: 11, color: '#9AA8B8' }}>DESCRIPCIÓN</div><div style={{ fontSize: 13, color: '#15293F', lineHeight: 1.6 }}>{ti.description}</div></div>}
+                        </div>
+                        {ti.entrances && ti.entrances.length > 0 && (
+                          <div style={{ borderTop: '1px solid #EDF1F5', padding: '10px 14px' }}>
+                            <div style={{ fontSize: 11, color: '#9AA8B8', marginBottom: 6 }}>ENTRADAS</div>
+                            {(ti.entrances as TourEntrance[]).map((e, ei) => (
+                              <div key={ei} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#15293F', padding: '3px 0' }}>
+                                <span>{e.included ? '✅' : '❌'} {e.name}</span>
+                                {!e.included && e.price && <span style={{ color: '#C0504D', fontWeight: 700 }}>{e.price} extra</span>}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </>
                   )
@@ -233,6 +252,93 @@ export default function VerCotizacion() {
                       <div style={{ border: '1px solid #E6EDF3', borderRadius: 10, padding: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div><div style={{ fontSize: 11, color: '#9AA8B8' }}>RECORRIDO</div><div style={{ fontSize: 14, fontWeight: 600, color: '#15293F' }}>{tr.from} → {tr.to}</div></div>
                         <div style={{ textAlign: 'right' }}><div style={{ fontSize: 11, color: '#9AA8B8' }}>{tr.date}</div><div style={{ fontSize: 13, fontWeight: 600, color: '#16A99C' }}>{tr.vehicle}</div></div>
+                      </div>
+                    </>
+                  )
+                })()}
+
+                {item.type === 'day' && (() => {
+                  const di = item as DayItem
+                  return (
+                    <div style={{ background: 'linear-gradient(135deg, #0F3D7A 0%, #134A99 100%)', borderRadius: 10, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
+                      <div style={{ background: 'rgba(255,255,255,.15)', borderRadius: 8, padding: '6px 12px', fontFamily: 'Archivo, sans-serif', fontSize: 18, fontWeight: 800, color: '#fff', minWidth: 48, textAlign: 'center' }}>{di.number}</div>
+                      <div>
+                        {di.date && <div style={{ fontSize: 11, color: 'rgba(255,255,255,.7)', marginBottom: 2 }}>{di.date}</div>}
+                        <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 15, fontWeight: 700, color: '#fff' }}>{di.title || `Día ${di.number}`}</div>
+                      </div>
+                    </div>
+                  )
+                })()}
+
+                {item.type === 'car' && (() => {
+                  const ca = item as CarItem
+                  return (
+                    <>
+                      <div style={{ marginBottom: 13 }}><div style={{ background: '#5B3FA0', color: '#fff', fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.12em', padding: '7px 14px', borderRadius: 6, display: 'inline-block' }}>CARRO · {ca.company}</div></div>
+                      <div style={{ border: '1px solid #E6EDF3', borderRadius: 10, overflow: 'hidden' }}>
+                        <div style={{ padding: '10px 14px', borderBottom: '1px solid #EDF1F5' }}>
+                          <div style={{ fontSize: 11, color: '#9AA8B8', marginBottom: 3 }}>VEHÍCULO</div>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: '#15293F' }}>{ca.model || ca.category}</div>
+                          {ca.category && ca.model && <div style={{ fontSize: 12, color: '#5B7186', marginTop: 2 }}>{ca.category}</div>}
+                        </div>
+                        <div style={{ padding: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 16px' }}>
+                          <div><div style={{ fontSize: 11, color: '#9AA8B8' }}>RECOGIDA</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{ca.pickupLocation}</div><div style={{ fontSize: 11, color: '#5B7186' }}>{ca.pickupDate} {ca.pickupTime}</div></div>
+                          <div><div style={{ fontSize: 11, color: '#9AA8B8' }}>DEVOLUCIÓN</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{ca.dropoffLocation}</div><div style={{ fontSize: 11, color: '#5B7186' }}>{ca.returnDate} {ca.returnTime}</div></div>
+                          {ca.protection && <div style={{ gridColumn: 'span 2' }}><div style={{ fontSize: 11, color: '#9AA8B8' }}>PROTECCIÓN</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{ca.protection}</div></div>}
+                        </div>
+                      </div>
+                    </>
+                  )
+                })()}
+
+                {item.type === 'package' && (() => {
+                  const pk = item as PackageItem
+                  return (
+                    <>
+                      <div style={{ marginBottom: 13 }}><div style={{ background: '#0F3D7A', color: '#fff', fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.12em', padding: '7px 14px', borderRadius: 6, display: 'inline-block' }}>PAQUETE · {pk.destination}</div></div>
+                      <div style={{ border: '1px solid #E6EDF3', borderRadius: 10, overflow: 'hidden' }}>
+                        <div style={{ padding: '10px 14px', borderBottom: '1px solid #EDF1F5' }}>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: '#15293F' }}>{pk.name}</div>
+                          {pk.duration && <div style={{ fontSize: 12, color: '#5B7186', marginTop: 2 }}>⏱ {pk.duration}</div>}
+                        </div>
+                        <div style={{ padding: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 16px' }}>
+                          {pk.startDate && <div><div style={{ fontSize: 11, color: '#9AA8B8' }}>INICIO</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{pk.startDate}</div></div>}
+                          {pk.endDate && <div><div style={{ fontSize: 11, color: '#9AA8B8' }}>FIN</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{pk.endDate}</div></div>}
+                          {pk.includes && <div style={{ gridColumn: 'span 2' }}><div style={{ fontSize: 11, color: '#9AA8B8' }}>INCLUYE</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{pk.includes}</div></div>}
+                          {pk.description && <div style={{ gridColumn: 'span 2' }}><div style={{ fontSize: 11, color: '#9AA8B8' }}>DESCRIPCIÓN</div><div style={{ fontSize: 13, color: '#15293F', lineHeight: 1.6 }}>{pk.description}</div></div>}
+                        </div>
+                        {pk.promotion && <div style={{ padding: '8px 14px', background: '#F0FBF9', borderTop: '1px solid #EDF1F5', display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ fontSize: 10, color: '#16A99C', fontWeight: 700, letterSpacing: '.06em' }}>PROMOCIÓN</span><span style={{ fontSize: 12, fontWeight: 700, color: '#0E7E75' }}>{pk.promotion}</span></div>}
+                      </div>
+                    </>
+                  )
+                })()}
+
+                {item.type === 'insurance' && (() => {
+                  const ins = item as InsuranceItem
+                  return (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 13 }}>
+                        <div style={{ background: '#1F8A5B', color: '#fff', fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.12em', padding: '7px 14px', borderRadius: 6 }}>SEGURO · {ins.company}</div>
+                        {ins.insuranceType && <div style={{ fontSize: 11, background: '#E8F8EF', color: '#1F8A5B', fontWeight: 700, padding: '4px 10px', borderRadius: 20 }}>{ins.insuranceType}</div>}
+                      </div>
+                      <div style={{ border: '1px solid #E6EDF3', borderRadius: 10, overflow: 'hidden' }}>
+                        <div style={{ padding: '10px 14px', background: 'linear-gradient(135deg, #1F8A5B 0%, #16A99C 100%)', borderBottom: '1px solid #EDF1F5' }}>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>{ins.plan}</div>
+                          {ins.maxCoverage && <div style={{ fontSize: 12, color: 'rgba(255,255,255,.85)', marginTop: 3 }}>Cobertura máxima: {ins.maxCoverage}</div>}
+                        </div>
+                        {ins.emergencyPhone && (
+                          <div style={{ padding: '10px 14px', background: '#FFFBEA', borderBottom: '1px solid #EDF1F5', display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <span style={{ fontSize: 18 }}>🆘</span>
+                            <div><div style={{ fontSize: 10, color: '#9AA8B8' }}>EMERGENCIAS 24H</div><div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 15, fontWeight: 800, color: '#15293F' }}>{ins.emergencyPhone}</div></div>
+                          </div>
+                        )}
+                        <div style={{ padding: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 16px' }}>
+                          {ins.destination && <div style={{ gridColumn: 'span 2' }}><div style={{ fontSize: 11, color: '#9AA8B8' }}>DESTINO</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{ins.destination}</div></div>}
+                          {ins.startDate && <div><div style={{ fontSize: 11, color: '#9AA8B8' }}>INICIO</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{ins.startDate}</div></div>}
+                          {ins.endDate && <div><div style={{ fontSize: 11, color: '#9AA8B8' }}>VENCIMIENTO</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{ins.endDate}</div></div>}
+                          {ins.cancellationAmount && <div><div style={{ fontSize: 11, color: '#9AA8B8' }}>CANCELACIÓN</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{ins.cancellationAmount}</div></div>}
+                          {ins.policyNumber && <div><div style={{ fontSize: 11, color: '#9AA8B8' }}>PÓLIZA</div><div style={{ fontSize: 13, fontWeight: 600, color: '#15293F' }}>{ins.policyNumber}</div></div>}
+                        </div>
                       </div>
                     </>
                   )
