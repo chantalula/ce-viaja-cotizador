@@ -1280,10 +1280,7 @@ export default function CotizadorApp() {
     .filter(it => it.type !== 'flight' && it.type !== 'cruise' && it.type !== 'day')
     .reduce((a, it) => a + ((it as { price: number }).price || 0), 0)
   const total = paxTotal + itemsTotal
-  const paxCount = (quote.pax || []).length
-  const perPax = paxCount > 0 ? total / paxCount : total
   const totalFmt = money(total, quote.currency)
-  const perPaxFmt = money2(perPax, quote.currency)
 
   const hasHotel = (quote.items || []).some(i => i.type === 'hotel')
 
@@ -2200,15 +2197,9 @@ export default function CotizadorApp() {
               <span style={{ fontSize: 12, fontWeight: 700, color: '#0F3D7A' }}>Total calculado</span>
               <span style={{ fontFamily: 'Archivo, sans-serif', fontSize: 15, fontWeight: 800, color: '#0F3D7A' }}>{totalFmt}</span>
             </div>
-            <div style={{ background: '#0F3D7A', borderRadius: 10, padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,.65)', letterSpacing: '.06em', marginBottom: 2 }}>TOTAL · {quote.currency}</div>
-                <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 22, fontWeight: 800, color: '#9EE7DE' }}>{totalFmt}</div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,.65)', letterSpacing: '.06em', marginBottom: 2 }}>{hasHotel ? 'POR HUÉSPED' : 'POR PASAJERO'}</div>
-                <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 16, fontWeight: 800, color: '#fff' }}>{perPaxFmt}</div>
-              </div>
+            <div style={{ background: '#0F3D7A', borderRadius: 10, padding: '14px 16px' }}>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,.65)', letterSpacing: '.06em', marginBottom: 2 }}>TOTAL · {quote.currency}</div>
+              <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 22, fontWeight: 800, color: '#9EE7DE' }}>{totalFmt}</div>
             </div>
           </div>
         </div>
@@ -2811,12 +2802,7 @@ export default function CotizadorApp() {
                 <div style={{ height: 1, background: '#EDF1F5', margin: '18px 0' }} />
                 <div style={{ background: '#0F3D7A', color: '#fff', borderRadius: 10, padding: '14px 16px' }}>
                   <div style={{ fontSize: 11, opacity: .8, letterSpacing: '.04em', marginBottom: 2 }}>TOTAL · {quote.currency}</div>
-                  <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 27, fontWeight: 800, color: '#9EE7DE', marginBottom: 10 }}>{totalFmt}</div>
-                  <div style={{ height: 1, background: 'rgba(255,255,255,.15)', marginBottom: 10 }} />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 11, opacity: .8, letterSpacing: '.04em' }}>{hasHotel ? 'POR HUÉSPED' : 'POR PASAJERO'}</span>
-                    <span style={{ fontFamily: 'Archivo, sans-serif', fontSize: 15, fontWeight: 800, color: '#fff' }}>{perPaxFmt}</span>
-                  </div>
+                  <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 27, fontWeight: 800, color: '#9EE7DE' }}>{totalFmt}</div>
                 </div>
 
                 <div style={{ height: 1, background: '#EDF1F5', margin: '20px 0' }} />

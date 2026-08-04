@@ -69,15 +69,12 @@ export default function VerCotizacion() {
   )
 
   const seller = SELLERS[quote.sellerIndex] || SELLERS[0]
-  const paxCount = (quote.pax || []).length
   const adultoCount  = (quote.pax || []).filter(p => p.type === 'Adulto').length
   const ninoCount    = (quote.pax || []).filter(p => p.type === 'Niño').length
   const jubCount     = (quote.pax || []).filter(p => p.type === 'Jubilado').length
   const infanteCount = (quote.pax || []).filter(p => p.type === 'Infante').length
   const total = adultoCount * (quote.priceAdulto || 0) + ninoCount * (quote.priceNino || 0) + jubCount * (quote.priceJubilado || 0) + infanteCount * (quote.priceInfante || 0)
-  const perPax = paxCount > 0 ? total / paxCount : total
   const totalFmt = money(total, quote.currency)
-  const perPaxFmt = money(perPax, quote.currency)
 
   const paxSummary = (() => {
     const c: Record<string, number> = {}
@@ -377,12 +374,7 @@ export default function VerCotizacion() {
             <div style={{ height: 1, background: '#EDF1F5', margin: '18px 0' }} />
             <div style={{ background: '#0F3D7A', color: '#fff', borderRadius: 10, padding: '14px 16px' }}>
               <div style={{ fontSize: 11, opacity: .8, letterSpacing: '.04em', marginBottom: 2 }}>TOTAL · {quote.currency}</div>
-              <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 24, fontWeight: 800, color: '#9EE7DE', marginBottom: 10 }}>{totalFmt}</div>
-              <div style={{ height: 1, background: 'rgba(255,255,255,.15)', marginBottom: 10 }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 11, opacity: .8, letterSpacing: '.04em' }}>POR PASAJERO</span>
-                <span style={{ fontFamily: 'Archivo, sans-serif', fontSize: 15, fontWeight: 800 }}>{perPaxFmt}</span>
-              </div>
+              <div style={{ fontFamily: 'Archivo, sans-serif', fontSize: 24, fontWeight: 800, color: '#9EE7DE' }}>{totalFmt}</div>
             </div>
 
             <div style={{ height: 1, background: '#EDF1F5', margin: '20px 0' }} />
