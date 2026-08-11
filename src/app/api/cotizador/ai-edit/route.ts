@@ -3,7 +3,13 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const client = new Anthropic()
 
-const SYSTEM_PROMPT = `Eres el asistente de edición del cotizador de CE Viaja. Recibes la cotización actual en JSON, una instrucción en lenguaje natural, y opcionalmente imágenes o PDFs adjuntos. Debes devolver SOLO un objeto JSON con dos campos:
+function buildSystemPrompt() {
+  const now = new Date()
+  const todayStr = now.toLocaleDateString('es-PA', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Panama' })
+  const currentYear = now.toLocaleString('en-US', { year: 'numeric', timeZone: 'America/Panama' })
+  const nextYear = String(Number(currentYear) + 1)
+
+  return `Eres el asistente de edición del cotizador de CE Viaja. Hoy es ${todayStr}. Si una fecha no trae año explícito o es ambigua, asume el año actual (${currentYear}) salvo que el contexto indique claramente que corresponde a ${nextYear} u otro año — nunca uses un año pasado por defecto. Recibes la cotización actual en JSON, una instrucción en lenguaje natural, y opcionalmente imágenes o PDFs adjuntos. Debes devolver SOLO un objeto JSON con dos campos:
 {"quote": <cotización completa actualizada>, "message": "<qué hiciste, en español, máximo 1 oración>"}
 
 La cotización tiene esta estructura:
@@ -18,8 +24,8 @@ La cotización tiene esta estructura:
 }
 
 Tipos de items posibles:
-DÍA: {"type":"day","number":1,"date":"Mar 15 jul 2025","title":"Llegada a Cancún"}
-VUELO: {"type":"flight","dir":"Ida"|"Vuelta"|"Tramo interno","date":"Jue 21 may 2026","price":0,"baggage":"","segments":[{"airline":"","flightNo":"","alliance":"—","from":"","fromCity":"","dep":"","to":"","toCity":"","arr":"","plus":"","duration":"","aircraft":"","cabin":"Económica","connectionAfter":""}]}
+DÍA: {"type":"day","number":1,"date":"Mar 15 jul ${currentYear}","title":"Llegada a Cancún"}
+VUELO: {"type":"flight","dir":"Ida"|"Vuelta"|"Tramo interno","date":"Jue 21 may ${currentYear}","price":0,"baggage":"","segments":[{"airline":"","flightNo":"","alliance":"—","from":"","fromCity":"","dep":"","to":"","toCity":"","arr":"","plus":"","duration":"","aircraft":"","cabin":"Económica","connectionAfter":""}]}
 HOTEL: {"type":"hotel","name":"","stars":0,"location":"","address":"","checkIn":"","checkOut":"","nights":"","roomType":"","board":"","cancellation":"Tarifa no reembolsable"|"Permite cancelación"|"","price":0}
 CRUCERO: {"type":"cruise","line":"","ship":"","route":"","depart":"","nights":"","cabin":"","cabinLabel":"","boardingTime":"","ports":[],"promotion":"","price":0}
 TOUR: {"type":"tour","name":"","location":"","date":"","duration":"","language":"","includes":"","meals":"","entrances":[],"description":"","price":0}
@@ -44,6 +50,7 @@ Reglas:
 - TOURS: si algún item de tipo "tour" tiene "duration" vacío, rellénalo estimando según el tipo de actividad (visita panorámica → "3 horas"; excursión a sitio histórico → "Día completo"; city tour → "4 horas"; traslado nocturno/show → "2-3 horas"). Si "language" está vacío y el tour es en un país hispanohablante ponlo en "Español"; si es en destino europeo no hispanohablante usa "Español e Inglés" (guía bilingüe típico en paquetes turísticos).
 - NUNCA respondas que algo no se puede hacer por ser "visual".
 - Devuelve SOLO el JSON, sin markdown ni explicaciones fuera del JSON.`
+}
 
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 
@@ -81,7 +88,7 @@ export async function POST(request: NextRequest) {
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 8192,
-      system: SYSTEM_PROMPT,
+      system: buildSystemPrompt(),
       messages: [{ role: 'user', content }],
     })
 

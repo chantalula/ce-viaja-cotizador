@@ -38,6 +38,8 @@ const SELLERS = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+const CURRENT_YEAR = new Date().getFullYear()
+
 function fmtNum(n: number) {
   return 'CV-' + new Date().getFullYear() + '-' + String(n).padStart(3, '0')
 }
@@ -64,7 +66,7 @@ function newItem(type: string): QuoteItem {
 
 function seed(): QuoteDoc {
   return {
-    number: 'CV-2025-0847',
+    number: `CV-${CURRENT_YEAR}-0847`,
     date: new Date().toLocaleDateString('es-PA', { day: 'numeric', month: 'short', year: 'numeric' }),
     validez: '24 horas',
     client: '', clientPhone: '', clientEmail: '', clientPassport: '', clientId: '',
@@ -1728,7 +1730,7 @@ export default function CotizadorApp() {
                               <option>Ida</option><option>Vuelta</option><option>Tramo interno</option>
                             </select>
                           </label>
-                          <label style={{ display: 'block' }}><span style={labelSt}>Fecha</span><input value={fi.date} onChange={e => onField('items.' + idx + '.date', e.target.value)} placeholder="Lun 15 sep 2025" style={inputSt} /></label>
+                          <label style={{ display: 'block' }}><span style={labelSt}>Fecha</span><input value={fi.date} onChange={e => onField('items.' + idx + '.date', e.target.value)} placeholder={`Lun 15 sep ${CURRENT_YEAR}`} style={inputSt} /></label>
                         </div>
                         {fi.segments.map((seg, sidx) => (
                           <div key={sidx} style={{ background: '#FAFCFE', border: '1px solid #EAEFF4', borderRadius: 9, padding: 10, marginBottom: 9 }}>
@@ -2069,7 +2071,7 @@ export default function CotizadorApp() {
                     return (
                       <div style={{ display: 'grid', gridTemplateColumns: '0.5fr 1.2fr 2fr', gap: 9 }}>
                         <label><span style={labelSt}>Día #</span><input value={di.number} onChange={e => onField('items.' + idx + '.number', parseInt(e.target.value) || 1)} type="number" min={1} placeholder="1" style={inputSt} /></label>
-                        <label><span style={labelSt}>Fecha</span><input value={di.date} onChange={e => onField('items.' + idx + '.date', e.target.value)} placeholder="Mar 15 jul 2025" style={inputSt} /></label>
+                        <label><span style={labelSt}>Fecha</span><input value={di.date} onChange={e => onField('items.' + idx + '.date', e.target.value)} placeholder={`Mar 15 jul ${CURRENT_YEAR}`} style={inputSt} /></label>
                         <label><span style={labelSt}>Título del día</span><input value={di.title} onChange={e => onField('items.' + idx + '.title', e.target.value)} placeholder="Llegada a Cancún" style={inputSt} /></label>
                       </div>
                     )

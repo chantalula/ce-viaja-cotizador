@@ -3,14 +3,22 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const client = new Anthropic()
 
-const SYSTEM_PROMPT = `Eres asistente de una agencia de viajes. Los archivos pueden ser itinerarios de viaje (de una o varias páginas), reservaciones de vuelo (Sabre/PNR), pasaportes, cotizaciones de hotel, crucero, tour, traslado, alquiler de carro, seguros, o capturas de precios. Pueden venir varios archivos a la vez — analiza TODOS y combina la información en un solo JSON. Devuelve SOLO un JSON válido, sin explicaciones ni markdown:
+function buildSystemPrompt() {
+  const now = new Date()
+  const todayStr = now.toLocaleDateString('es-PA', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Panama' })
+  const currentYear = now.toLocaleString('en-US', { year: 'numeric', timeZone: 'America/Panama' })
+  const nextYear = String(Number(currentYear) + 1)
+
+  return `Eres asistente de una agencia de viajes. Hoy es ${todayStr}. Si un documento no especifica el año de una fecha (o lo da de forma ambigua), asume el año actual (${currentYear}) salvo que el contexto del documento indique claramente otro año — por ejemplo, si el mes/día ya pasó este año y el documento es claramente un viaje futuro, usa ${nextYear}. NUNCA uses un año pasado por defecto.
+
+Los archivos pueden ser itinerarios de viaje (de una o varias páginas), reservaciones de vuelo (Sabre/PNR), pasaportes, cotizaciones de hotel, crucero, tour, traslado, alquiler de carro, seguros, o capturas de precios. Pueden venir varios archivos a la vez — analiza TODOS y combina la información en un solo JSON. Devuelve SOLO un JSON válido, sin explicaciones ni markdown:
 {"client":"","clientPhone":"","clientEmail":"","clientPassport":"","pax":[{"name":"APELLIDO / NOMBRE","type":"Adulto","cabin":"Económica"}],"taxes":0,"priceAdulto":0,"priceNino":0,"priceJubilado":0,"items":[]}
 
 ⚠️ REGLA FUNDAMENTAL — ITINERARIOS COMPLETOS: Si el documento es un itinerario de paquete o viaje completo con múltiples servicios, debes extraer CADA servicio como su propio item separado en el array "items". NO hay límite de items — extrae TODO lo que encuentres: cada vuelo, cada hotel, cada traslado, cada tour, cada actividad, cada renta de carro. NUNCA colapses múltiples servicios en un solo item PAQUETE cuando tengas los detalles individuales disponibles.
 
 Esquemas de items:
-DÍA: {"type":"day","number":1,"date":"Mar 15 jul 2025","title":"Llegada a Cancún"}
-VUELO: {"type":"flight","dir":"Ida","date":"Jue 21 may 2026","price":0,"baggage":"","segments":[{"airline":"","flightNo":"","alliance":"—","from":"","fromCity":"","dep":"","to":"","toCity":"","arr":"","plus":"","duration":"","aircraft":"","cabin":"Económica","connectionAfter":""}]}
+DÍA: {"type":"day","number":1,"date":"Mar 15 jul ${currentYear}","title":"Llegada a Cancún"}
+VUELO: {"type":"flight","dir":"Ida","date":"Jue 21 may ${currentYear}","price":0,"baggage":"","segments":[{"airline":"","flightNo":"","alliance":"—","from":"","fromCity":"","dep":"","to":"","toCity":"","arr":"","plus":"","duration":"","aircraft":"","cabin":"Económica","connectionAfter":""}]}
 HOTEL: {"type":"hotel","name":"","stars":0,"location":"","address":"","checkIn":"","checkOut":"","nights":"","roomType":"","board":"","cancellation":"","price":0}
 CRUCERO: {"type":"cruise","line":"","ship":"","route":"","depart":"","nights":"","cabin":"","cabinLabel":"","boardingTime":"","ports":[{"date":"","port":"","arr":"","dep":""}],"promotion":"","price":0}
 TOUR: {"type":"tour","name":"","location":"","date":"","duration":"","language":"","includes":"","meals":"","entrances":[{"name":"","included":true,"price":""}],"description":"","price":0}
@@ -20,7 +28,7 @@ PAQUETE: {"type":"package","name":"","destination":"","startDate":"","endDate":"
 SEGURO: {"type":"insurance","company":"","plan":"","insuranceType":"Asistencia Médica","destination":"","startDate":"","endDate":"","days":"","pax":"","maxCoverage":"","cancellationAmount":"","emergencyPhone":"","policyNumber":"","coverage":"","notes":"","price":0}
 
 Reglas por tipo:
-- DÍA: Para itinerarios organizados por días, inserta un item DÍA antes de cada grupo de actividades del mismo día. "number"=número del día en el itinerario (1, 2, 3…), "date"=fecha del día en español corto (ej: "Mar 15 jul 2025"), "title"=descripción corta del día (ej: "Llegada a Cancún", "Día libre en París", "Excursión a Chichen Itzá", "Regreso"). Esto es OBLIGATORIO para documentos de paquetes o itinerarios multi-día: cada día debe tener su encabezado DÍA seguido de todos sus servicios (vuelos, traslados, hotel, tours, etc.).
+- DÍA: Para itinerarios organizados por días, inserta un item DÍA antes de cada grupo de actividades del mismo día. "number"=número del día en el itinerario (1, 2, 3…), "date"=fecha del día en español corto (ej: "Mar 15 jul ${currentYear}"), "title"=descripción corta del día (ej: "Llegada a Cancún", "Día libre en París", "Excursión a Chichen Itzá", "Regreso"). Esto es OBLIGATORIO para documentos de paquetes o itinerarios multi-día: cada día debe tener su encabezado DÍA seguido de todos sus servicios (vuelos, traslados, hotel, tours, etc.).
 - PASAPORTE: llena "client", "clientPassport" y agrega a "pax". No inventes vuelos.
 - "client": nombre del titular o grupo. NUNCA el código de reservación.
 - DOCUMENTOS CE VIAJA: secciones "OTROS" o "NOTAS" al final con despedidas ("GRACIAS", "FELIZ VIAJE", etc.) — IGNÓRALAS. "PREPARADO PARA" = nombre del cliente (va en "client"), no es pasajero.
@@ -38,8 +46,9 @@ Reglas por tipo:
 - "Economy"/"Turista"="Económica"; "Business"="Ejecutiva".
 - Alianzas — Star Alliance: UA,LH,AC,SQ,NH,TK,LX,OS,TP,LO,AV,CM,ET,MS,BR,CA,AI,NZ,OZ,SK,ZH,SA,A3,OU,HO. SkyTeam: DL,AF,KL,KE,MU,CZ,AM,AZ,VN,UX,ME,GA,KQ,RO,MF,OK. oneworld: AA,BA,IB,CX,QF,JL,AY,QR,MH,RJ,AT,AS,UL,FJ. Sin alianza (pon "—"): LA,FR,U2,WS,B6,NK,F9,Y4,VB,P5,DM,H2,FO,AD,G3,WN,G4,SY,WG,BW,V0,PY,TS.
 - SEGURO: "company"=nombre de la aseguradora, "plan"=nombre del plan, "insuranceType"="Asistencia Médica"|"Cancelación"|"Asistencia Médica y Cancelación"|"Seguro Integral"|"Multiviaje Anual", "destination"=zona de cobertura, "startDate"/"endDate"=fechas de vigencia, "days"=días de cobertura, "pax"=número de asegurados, "maxCoverage"=monto máximo de cobertura médica principal (ej: "$50,000 USD"), "cancellationAmount"=monto de cobertura por cancelación si aplica, "emergencyPhone"=número de emergencias 24h, "policyNumber"=número de póliza o voucher, "coverage"=MÁXIMO 8 coberturas principales en categorías generales separadas por · — NO listes cada sub-cobertura individual ni montos por cobertura, solo los grupos principales (ej: "Gastos médicos · Cancelación de viaje · Pérdida de equipaje · Responsabilidad civil · Evacuación médica · Deportes recreativos · Asistencia legal · Repatriación"), "notes"=resumen breve de condiciones importantes (máximo 2-3 líneas: restricciones de edad, países excluidos, límite de acumulación), "price"=precio total.
-- Fechas en español corto: "Jue 21 may 2026". Deja "" o 0 lo que no aparezca.
+- Fechas en español corto: "Jue 21 may ${currentYear}". Deja "" o 0 lo que no aparezca.
 - En segmentos de vuelo, "duration" déjalo "" salvo que aparezca explícita en el documento (ej: "9h 45m").`
+}
 
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 const MAX_TOTAL_MB = 30
@@ -100,10 +109,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Sube al menos un archivo o pega el texto.' }, { status: 400 })
     }
 
+    const systemPrompt = buildSystemPrompt()
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 8192,
-      system: SYSTEM_PROMPT,
+      system: systemPrompt,
       messages: [{ role: 'user', content }],
     })
 
@@ -116,7 +126,7 @@ export async function POST(request: NextRequest) {
       const retry = await client.messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: 8192,
-        system: SYSTEM_PROMPT,
+        system: systemPrompt,
         messages: [
           { role: 'user', content },
           { role: 'assistant', content: raw || '(respuesta vacía)' },
