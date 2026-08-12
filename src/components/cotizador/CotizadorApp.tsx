@@ -2290,9 +2290,9 @@ export default function CotizadorApp() {
                       return (
                         <>
                           <div style={{ marginBottom: 13 }}>
-                            <div style={{ background: '#16A99C', color: '#fff', fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.12em', padding: '7px 14px', borderRadius: 6, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                            <div style={{ background: '#16A99C', color: '#fff', fontFamily: 'Archivo, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.12em', padding: '7px 14px', borderRadius: 6, display: 'inline-block' }}>
                               <span>HOTEL · {hi.name}</span>
-                              {hi.stars > 0 && <span style={{ color: '#FFE566', letterSpacing: 1 }}>{'★'.repeat(hi.stars)}</span>}
+                              {hi.stars > 0 && <span style={{ color: '#FFE566', letterSpacing: 1, marginLeft: 8 }}>{'★'.repeat(hi.stars)}</span>}
                             </div>
                           </div>
                           <div style={{ border: '1px solid #E6EDF3', borderRadius: 10, overflow: 'hidden' }}>
